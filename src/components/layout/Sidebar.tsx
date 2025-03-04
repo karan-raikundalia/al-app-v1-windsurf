@@ -21,7 +21,7 @@ export function Sidebar() {
   return (
     <aside className="w-64 h-full bg-sidebar shrink-0 border-r border-sidebar-border overflow-y-auto">
       <div className="p-6">
-        <div className="flex items-center gap-2 text-sidebar-foreground">
+        <div className="flex items-center gap-2 text-white">
           <MenuSquare className="h-6 w-6" />
           <h1 className="text-xl font-semibold tracking-tight">Enterprise Analytics</h1>
         </div>
