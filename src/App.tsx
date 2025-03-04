@@ -21,7 +21,13 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/analysis/sensitivity" element={<Index />} />
-          <Route path="/risk-tracker" element={<RiskTracker />} />
+          
+          {/* Risk Tracker Routes */}
+          <Route path="/risk-tracker" element={<Navigate to="/risk-tracker/assumption-validity" replace />} />
+          <Route path="/risk-tracker/assumption-validity" element={<RiskTracker defaultTab="assumption-validity" />} />
+          <Route path="/risk-tracker/validation" element={<RiskTracker defaultTab="validation" />} />
+          <Route path="/risk-tracker/risk-register" element={<RiskTracker defaultTab="risk-register" />} />
+          <Route path="/risk-tracker/documents" element={<RiskTracker defaultTab="documents" />} />
           
           {/* Placeholder routes for other sections */}
           <Route 

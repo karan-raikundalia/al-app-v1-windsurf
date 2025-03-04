@@ -9,7 +9,10 @@ import {
   Home, 
   MenuSquare, 
   Sliders,
-  ShieldAlert 
+  ShieldAlert,
+  Check,
+  List,
+  Upload
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +20,9 @@ export function Sidebar() {
   const location = useLocation();
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(
     location.pathname.includes("/analysis")
+  );
+  const [isRiskTrackerOpen, setIsRiskTrackerOpen] = useState(
+    location.pathname.includes("/risk-tracker")
   );
 
   return (
@@ -85,13 +91,58 @@ export function Sidebar() {
           </li>
 
           <li>
-            <NavLink 
-              to="/risk-tracker" 
-              className={({ isActive }) => cn("nav-link", isActive && "active")}
-            >
-              <ShieldAlert className="h-4 w-4" />
-              <span>Risk Tracker</span>
-            </NavLink>
+            <div className="flex flex-col">
+              <button
+                onClick={() => setIsRiskTrackerOpen(!isRiskTrackerOpen)}
+                className={cn(
+                  "nav-link justify-between group",
+                  location.pathname.includes("/risk-tracker") && "active"
+                )}
+              >
+                <div className="flex items-center gap-2.5">
+                  <ShieldAlert className="h-4 w-4" />
+                  <span>Risk Tracker</span>
+                </div>
+                {isRiskTrackerOpen ? (
+                  <ChevronDown className="h-4 w-4 transition-transform" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 transition-transform" />
+                )}
+              </button>
+              
+              {isRiskTrackerOpen && (
+                <div className="mt-1 pl-2 space-y-1 animate-slide-in">
+                  <NavLink
+                    to="/risk-tracker/assumption-validity"
+                    className={({ isActive }) => cn("sub-nav-link", isActive && "active")}
+                  >
+                    <Check className="h-4 w-4" />
+                    <span>Assumption Validity</span>
+                  </NavLink>
+                  <NavLink
+                    to="/risk-tracker/validation"
+                    className={({ isActive }) => cn("sub-nav-link", isActive && "active")}
+                  >
+                    <Check className="h-4 w-4" />
+                    <span>Validation</span>
+                  </NavLink>
+                  <NavLink
+                    to="/risk-tracker/risk-register"
+                    className={({ isActive }) => cn("sub-nav-link", isActive && "active")}
+                  >
+                    <List className="h-4 w-4" />
+                    <span>Risk Register</span>
+                  </NavLink>
+                  <NavLink
+                    to="/risk-tracker/documents"
+                    className={({ isActive }) => cn("sub-nav-link", isActive && "active")}
+                  >
+                    <Upload className="h-4 w-4" />
+                    <span>Documents</span>
+                  </NavLink>
+                </div>
+              )}
+            </div>
           </li>
 
           <li>
