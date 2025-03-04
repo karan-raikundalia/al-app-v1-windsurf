@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   BarChart,
@@ -13,7 +12,7 @@ import {
 } from "recharts";
 import { formatNumber } from "@/lib/utils";
 
-interface TornadoChartProps {
+export interface TornadoChartProps {
   data: {
     variable: string;
     positiveDelta: number;
@@ -87,10 +86,10 @@ export function TornadoChart({
   };
 
   return (
-    <ResponsiveContainer width="100%" height={60 * sortedData.length}>
+    <ResponsiveContainer width="100%" height={60 * data.length}>
       <BarChart
         layout="vertical"
-        data={sortedData}
+        data={data}
         margin={{ top: 20, right: 20, bottom: 20, left: 120 }}
         onClick={(state: any) => {
           if (state && state.activePayload && state.activePayload[0]) {

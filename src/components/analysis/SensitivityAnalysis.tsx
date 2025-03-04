@@ -159,6 +159,14 @@ export function SensitivityAnalysis() {
     }, 500);
   };
 
+  // Transform the variables data for the TornadoChart component
+  const chartData = filteredVariables.map(variable => ({
+    variable: variable.name,
+    positiveDelta: variable.impact > 0 ? variable.impact : 0,
+    negativeDelta: variable.impact < 0 ? variable.impact : 0,
+    baseline: variable.baseValue
+  }));
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -190,8 +198,8 @@ export function SensitivityAnalysis() {
         </div>
       ) : (
         <TornadoChart 
-          variables={filteredVariables} 
-          metric={currentMetric}
+          data={chartData}
+          baseValue={0}
         />
       )}
       
