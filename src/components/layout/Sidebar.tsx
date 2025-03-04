@@ -8,7 +8,8 @@ import {
   FileText, 
   Home, 
   MenuSquare, 
-  Sliders 
+  Sliders,
+  ShieldAlert 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -81,6 +82,16 @@ export function Sidebar() {
                 </div>
               )}
             </div>
+          </li>
+
+          <li>
+            <NavLink 
+              to="/risk-tracker" 
+              className={({ isActive }) => cn("nav-link", isActive && "active")}
+            >
+              <ShieldAlert className="h-4 w-4" />
+              <span>Risk Tracker</span>
+            </NavLink>
           </li>
 
           <li>

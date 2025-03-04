@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import RiskTracker from "./pages/RiskTracker";
 import { SensitivityAnalysis } from "./components/analysis/SensitivityAnalysis";
 import { AppLayout } from "./components/layout/AppLayout";
 
@@ -20,6 +21,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/analysis/sensitivity" element={<Index />} />
+          <Route path="/risk-tracker" element={<RiskTracker />} />
           
           {/* Placeholder routes for other sections */}
           <Route 
