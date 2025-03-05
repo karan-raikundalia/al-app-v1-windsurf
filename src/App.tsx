@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import RiskTracker from "./pages/RiskTracker";
 import { SensitivityAnalysis } from "./components/analysis/SensitivityAnalysis";
 import { AppLayout } from "./components/layout/AppLayout";
+import MonteCarloAnalysis from "./pages/MonteCarloAnalysis";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/analysis/sensitivity" element={<Index />} />
+          <Route path="/analysis/monte-carlo" element={<MonteCarloAnalysis />} />
           
           {/* Risk Tracker Routes */}
           <Route path="/risk-tracker" element={<Navigate to="/risk-tracker/assumption-validity" replace />} />

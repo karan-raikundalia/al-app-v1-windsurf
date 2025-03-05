@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { 
@@ -12,7 +11,8 @@ import {
   ShieldAlert,
   Check,
   List,
-  Upload
+  Upload,
+  Activity
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -84,6 +84,13 @@ export function Sidebar() {
                   >
                     <Sliders className="h-4 w-4" />
                     <span>Sensitivity Analysis</span>
+                  </NavLink>
+                  <NavLink
+                    to="/analysis/monte-carlo"
+                    className={({ isActive }) => cn("sub-nav-link", isActive && "active")}
+                  >
+                    <Activity className="h-4 w-4" />
+                    <span>Monte Carlo Analysis</span>
                   </NavLink>
                 </div>
               )}
