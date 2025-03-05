@@ -15,6 +15,7 @@ import {
 import { formatNumber } from "@/lib/utils";
 import { DataPanel } from "@/components/ui/DataPanel";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { formatMetricValue } from "./utils/monteCarloUtils";
 
 interface MonteCarloChartProps {
   results: any;
@@ -108,12 +109,7 @@ export function MonteCarloChart({ results }: MonteCarloChartProps) {
 
   // Format tooltip values
   const formatTooltipValue = (value: number) => {
-    if (metric === "npv") return `$${formatNumber(value)}`;
-    if (metric === "irr") return `${(value * 100).toFixed(2)}%`;
-    if (metric === "paybackPeriod") return `${value.toFixed(1)} years`;
-    if (metric === "debtServiceCoverage") return value.toFixed(2);
-    if (metric === "equityMultiple") return `${value.toFixed(2)}x`;
-    return value.toFixed(2);
+    return formatMetricValue(value, metric);
   };
 
   // Custom tooltip
@@ -168,32 +164,38 @@ export function MonteCarloChart({ results }: MonteCarloChartProps) {
             <XAxis 
               dataKey="bin" 
               tickFormatter={(value) => formatTooltipValue(value)}
-              label={{ 
-                value: metricSettings.title, 
-                position: 'insideBottom', 
-                offset: -15 
-              }}
-            />
+            >
+              <Label 
+                value={metricSettings.title} 
+                position="bottom" 
+                offset={-10}
+                style={{ textAnchor: 'middle', fontSize: '0.8rem', fill: '#6B7280' }}
+              />
+            </XAxis>
             <YAxis 
               yAxisId="left"
               orientation="left"
-              label={{ 
-                value: 'Frequency', 
-                angle: -90, 
-                position: 'insideLeft' 
-              }}
-            />
+            >
+              <Label 
+                value="Frequency" 
+                angle={-90} 
+                position="insideLeft" 
+                style={{ textAnchor: 'middle', fontSize: '0.8rem', fill: '#6B7280' }}
+              />
+            </YAxis>
             <YAxis 
               yAxisId="right" 
               orientation="right"
               domain={[0, 1]}
               tickFormatter={(value) => `${(value * 100).toFixed(0)}%`}
-              label={{ 
-                value: 'Cumulative %', 
-                angle: 90, 
-                position: 'insideRight' 
-              }}
-            />
+            >
+              <Label 
+                value="Cumulative %" 
+                angle={90} 
+                position="insideRight" 
+                style={{ textAnchor: 'middle', fontSize: '0.8rem', fill: '#6B7280' }}
+              />
+            </YAxis>
             <Tooltip content={<CustomTooltip />} />
             <Legend />
             <Area 
