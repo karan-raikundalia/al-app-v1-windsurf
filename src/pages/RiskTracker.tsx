@@ -1,18 +1,74 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Risk } from "@/models/risk";
+import { RiskRegisterTable } from "@/components/risk/RiskRegisterTable";
 
 interface RiskTrackerProps {
   defaultTab?: "assumption-validity" | "validation" | "risk-register" | "documents";
 }
 
+// Sample risk data
+const SAMPLE_RISKS: Risk[] = [
+  {
+    id: "RISK-1",
+    category: "Financial",
+    description: "Cost overruns due to unforeseen site conditions",
+    consequence: "Project budget exceeded by more than 10%",
+    likelihood: "Medium",
+    impact: "High", 
+    mitigation: "Detailed site survey and contingency budget allocation",
+    owner: "Project Manager",
+    status: "In Progress",
+    contingency: "Request additional funding or reduce scope"
+  },
+  {
+    id: "RISK-2",
+    category: "Technical",
+    description: "Integration issues with legacy systems",
+    consequence: "Project delays and potential functional limitations",
+    likelihood: "High",
+    impact: "Medium",
+    mitigation: "Early integration testing and technical discovery phase",
+    owner: "Technical Lead",
+    status: "Not Started",
+    contingency: "Implement temporary workarounds and schedule fixes post-launch"
+  }
+];
+
 const RiskTracker = ({ defaultTab = "assumption-validity" }: RiskTrackerProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [risks, setRisks] = useState<Risk[]>(SAMPLE_RISKS);
+
+  // Handle risk management operations
+  const handleRiskAdded = (risk: Risk) => {
+    setRisks([...risks, risk]);
+    toast({
+      title: "Risk added",
+      description: `Risk ${risk.id} has been added to the register.`,
+    });
+  };
+
+  const handleRiskUpdated = (updatedRisk: Risk) => {
+    setRisks(risks.map(risk => risk.id === updatedRisk.id ? updatedRisk : risk));
+    toast({
+      title: "Risk updated",
+      description: `Risk ${updatedRisk.id} has been updated.`,
+    });
+  };
+
+  const handleRiskDeleted = (riskId: string) => {
+    setRisks(risks.filter(risk => risk.id !== riskId));
+    toast({
+      title: "Risk deleted",
+      description: `Risk ${riskId} has been removed from the register.`,
+    });
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -57,18 +113,12 @@ const RiskTracker = ({ defaultTab = "assumption-validity" }: RiskTrackerProps) =
         );
       case "risk-register":
         return (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Risk Register</h2>
-            <p className="text-muted-foreground">
-              Maintain a comprehensive register of project risks, including their probability, impact, and mitigation strategies.
-            </p>
-            
-            <div className="border rounded-md p-4 mt-4">
-              <p className="text-center text-muted-foreground">
-                No risks have been added to the register yet.
-              </p>
-            </div>
-          </div>
+          <RiskRegisterTable 
+            risks={risks} 
+            onRiskAdded={handleRiskAdded} 
+            onRiskUpdated={handleRiskUpdated} 
+            onRiskDeleted={handleRiskDeleted} 
+          />
         );
       case "documents":
         return (
