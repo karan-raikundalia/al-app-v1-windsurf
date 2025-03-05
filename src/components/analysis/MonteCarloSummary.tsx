@@ -68,7 +68,7 @@ export function MonteCarloSummary({ results }: MonteCarloSummaryProps) {
                   <InfoIcon className="h-4 w-4 text-muted-foreground" />
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p className="max-w-xs">Net Present Value represents the difference between the present value of cash inflows and outflows over the project's lifetime.</p>
+                  <p className="max-w-xs">Net Present Value represents the difference between the present value of cash inflows and outflows over the project&apos;s lifetime.</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -125,7 +125,7 @@ export function MonteCarloSummary({ results }: MonteCarloSummaryProps) {
           
           <div>
             <div className="flex justify-between text-sm mb-1">
-              <span>Probability IRR > 10%</span>
+              <span>Probability IRR {`>`} 10%</span>
               <span className="font-medium">{(probabilityIRRAbove10 * 100).toFixed(1)}%</span>
             </div>
             <Progress value={probabilityIRRAbove10 * 100} className="h-2" />
@@ -165,7 +165,7 @@ export function MonteCarloSummary({ results }: MonteCarloSummaryProps) {
           
           <div>
             <div className="flex justify-between text-sm mb-1">
-              <span>Probability < 5 Years</span>
+              <span>Probability {`<`} 5 Years</span>
               <span className="font-medium">{(probabilityPaybackUnder5 * 100).toFixed(1)}%</span>
             </div>
             <Progress value={probabilityPaybackUnder5 * 100} className="h-2" />
@@ -188,7 +188,7 @@ export function MonteCarloSummary({ results }: MonteCarloSummaryProps) {
                   <InfoIcon className="h-4 w-4 text-muted-foreground" />
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p className="max-w-xs">Debt Service Coverage Ratio measures the project's ability to generate sufficient cash flows to cover debt obligations.</p>
+                  <p className="max-w-xs">Debt Service Coverage Ratio measures the project&apos;s ability to generate sufficient cash flows to cover debt obligations.</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -205,7 +205,7 @@ export function MonteCarloSummary({ results }: MonteCarloSummaryProps) {
           
           <div>
             <div className="flex justify-between text-sm mb-1">
-              <span>Probability DSCR > 1.0</span>
+              <span>Probability DSCR {`>`} 1.0</span>
               <span className="font-medium">{(probabilityDSCRAbove1 * 100).toFixed(1)}%</span>
             </div>
             <Progress value={probabilityDSCRAbove1 * 100} className="h-2" />
@@ -245,7 +245,7 @@ export function MonteCarloSummary({ results }: MonteCarloSummaryProps) {
           
           <div>
             <div className="flex justify-between text-sm mb-1">
-              <span>Probability EM > 2.0x</span>
+              <span>Probability EM {`>`} 2.0x</span>
               <span className="font-medium">{(probabilityEMAbove2 * 100).toFixed(1)}%</span>
             </div>
             <Progress value={probabilityEMAbove2 * 100} className="h-2" />
