@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { AppLayout } from "@/components/layout/AppLayout";
-import { ProformaGrid } from "@/components/proforma/ProformaGrid";
+import ProformaGrid from "@/components/proforma/ProformaGrid";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
