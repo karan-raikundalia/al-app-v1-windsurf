@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +11,7 @@ import { SensitivityAnalysis } from "./components/analysis/SensitivityAnalysis";
 import { AppLayout } from "./components/layout/AppLayout";
 import MonteCarloAnalysis from "./pages/MonteCarloAnalysis";
 import ProformaView from "./pages/ProformaView";
+import LCOECalculator from "./pages/LCOECalculator";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +35,9 @@ const App = () => (
           
           {/* Proforma View */}
           <Route path="/proforma" element={<ProformaView />} />
+          
+          {/* LCOE Calculator */}
+          <Route path="/lcoe-calculator" element={<LCOECalculator />} />
           
           {/* Placeholder routes for other sections */}
           <Route 

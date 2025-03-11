@@ -12,7 +12,8 @@ import {
   Check,
   List,
   Upload,
-  Activity
+  Activity,
+  Calculator
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -169,6 +170,16 @@ export function Sidebar() {
             >
               <MenuSquare className="h-4 w-4" />
               <span>Inputs</span>
+            </NavLink>
+          </li>
+
+          <li>
+            <NavLink 
+              to="/lcoe-calculator" 
+              className={({ isActive }) => cn("nav-link", isActive && "active")}
+            >
+              <Calculator className="h-4 w-4" />
+              <span>LCOE Calculator</span>
             </NavLink>
           </li>
         </ul>
