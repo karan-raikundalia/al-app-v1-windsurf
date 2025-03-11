@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { 
@@ -13,7 +14,8 @@ import {
   List,
   Upload,
   Activity,
-  Calculator
+  Calculator,
+  BarChartHorizontal
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -92,6 +94,13 @@ export function Sidebar() {
                   >
                     <Activity className="h-4 w-4" />
                     <span>Monte Carlo Analysis</span>
+                  </NavLink>
+                  <NavLink
+                    to="/analysis/multi-metric"
+                    className={({ isActive }) => cn("sub-nav-link", isActive && "active")}
+                  >
+                    <BarChartHorizontal className="h-4 w-4" />
+                    <span>Multi-Metric Analysis</span>
                   </NavLink>
                 </div>
               )}

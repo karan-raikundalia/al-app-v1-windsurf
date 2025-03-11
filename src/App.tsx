@@ -12,6 +12,7 @@ import { AppLayout } from "./components/layout/AppLayout";
 import MonteCarloAnalysis from "./pages/MonteCarloAnalysis";
 import ProformaView from "./pages/ProformaView";
 import LCOECalculator from "./pages/LCOECalculator";
+import MultiMetricAnalysis from "./pages/MultiMetricAnalysis";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/analysis/sensitivity" element={<Index />} />
           <Route path="/analysis/monte-carlo" element={<MonteCarloAnalysis />} />
+          <Route path="/analysis/multi-metric" element={<MultiMetricAnalysis />} />
           
           {/* Risk Tracker Routes */}
           <Route path="/risk-tracker" element={<Navigate to="/risk-tracker/assumption-validity" replace />} />
