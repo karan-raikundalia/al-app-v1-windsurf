@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +9,7 @@ import RiskTracker from "./pages/RiskTracker";
 import { SensitivityAnalysis } from "./components/analysis/SensitivityAnalysis";
 import { AppLayout } from "./components/layout/AppLayout";
 import MonteCarloAnalysis from "./pages/MonteCarloAnalysis";
+import ProformaView from "./pages/ProformaView";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +30,9 @@ const App = () => (
           <Route path="/risk-tracker/validation" element={<RiskTracker defaultTab="validation" />} />
           <Route path="/risk-tracker/risk-register" element={<RiskTracker defaultTab="risk-register" />} />
           <Route path="/risk-tracker/documents" element={<RiskTracker defaultTab="documents" />} />
+          
+          {/* Proforma View */}
+          <Route path="/proforma" element={<ProformaView />} />
           
           {/* Placeholder routes for other sections */}
           <Route 
@@ -53,20 +56,6 @@ const App = () => (
                 <div className="flex items-center justify-center h-[600px]">
                   <div className="text-center">
                     <h1 className="text-2xl font-semibold tracking-tight mb-4">Scenarios</h1>
-                    <p className="text-muted-foreground">This page is under development.</p>
-                  </div>
-                </div>
-              </AppLayout>
-            } 
-          />
-          
-          <Route 
-            path="/proforma" 
-            element={
-              <AppLayout>
-                <div className="flex items-center justify-center h-[600px]">
-                  <div className="text-center">
-                    <h1 className="text-2xl font-semibold tracking-tight mb-4">Pro Forma</h1>
                     <p className="text-muted-foreground">This page is under development.</p>
                   </div>
                 </div>
