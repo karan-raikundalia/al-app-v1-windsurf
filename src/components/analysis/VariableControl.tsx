@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Check, ChevronDown, Search, SlidersHorizontal, X } from "lucide-react";
+import { Check, ChevronDown, Search, SlidersHorizontal, X, BarChart2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { 
@@ -9,6 +9,13 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue 
+} from "@/components/ui/select";
 
 export interface AnalysisVariable {
   id: string;
@@ -21,20 +28,35 @@ export interface AnalysisVariable {
   metric: "cost" | "schedule" | "performance";
 }
 
+export interface OutputMetric {
+  id: string;
+  name: string;
+  unit: string;
+  description?: string;
+}
+
 interface VariableControlProps {
   variables: AnalysisVariable[];
   onFilterChange: (variables: AnalysisVariable[]) => void;
   metrics: string[];
+  outputMetrics?: OutputMetric[];
   onMetricChange: (metric: string) => void;
+  onOutputMetricChange?: (metricId: string) => void;
   currentMetric: string;
+  currentOutputMetric?: string;
+  maxInfluentialCount?: number;
 }
 
 export function VariableControl({
   variables,
   onFilterChange,
   metrics,
+  outputMetrics = [],
   onMetricChange,
+  onOutputMetricChange,
   currentMetric,
+  currentOutputMetric,
+  maxInfluentialCount = 10,
 }: VariableControlProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -102,6 +124,25 @@ export function VariableControl({
             </button>
           )}
         </div>
+        
+        {outputMetrics.length > 0 && onOutputMetricChange && (
+          <Select 
+            value={currentOutputMetric} 
+            onValueChange={onOutputMetricChange}
+          >
+            <SelectTrigger className="w-[220px]">
+              <BarChart2 className="mr-2 h-4 w-4" />
+              <SelectValue placeholder="Select output metric" />
+            </SelectTrigger>
+            <SelectContent>
+              {outputMetrics.map((metric) => (
+                <SelectItem key={metric.id} value={metric.id}>
+                  {metric.name} ({metric.unit})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
