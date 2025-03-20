@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   BarChart,
@@ -20,10 +21,12 @@ export interface TornadoChartProps {
     baseline: number;
     category?: string;
     unit?: string;
+    variableId?: string;
   }[];
   baseValue: number;
   sortBy?: "impact" | "alphabetical";
-  onVariableClick?: (variable: string) => void;
+  onVariableClick?: (variableId: string) => void;
+  chartHeight?: number | string;
 }
 
 // Custom tooltip component for the tornado chart
@@ -79,6 +82,7 @@ export function TornadoChart({
   baseValue,
   sortBy = "impact",
   onVariableClick,
+  chartHeight = "100%",
 }: TornadoChartProps) {
   // Sort data based on the sortBy prop
   const sortedData = [...data].sort((a, b) => {
@@ -99,13 +103,13 @@ export function TornadoChart({
 
   // Handle clicking on a bar
   const handleClick = (data: any) => {
-    if (onVariableClick && data && data.variable) {
-      onVariableClick(data.variable);
+    if (onVariableClick && data && data.variableId) {
+      onVariableClick(data.variableId);
     }
   };
 
   return (
-    <div className="w-full" style={{ height: Math.max(300, 60 * data.length) }}>
+    <div className="w-full" style={{ height: chartHeight }}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           layout="vertical"

@@ -60,8 +60,7 @@ export function transformInputToAnalysisVariable(input: InputValue): AnalysisVar
   };
 }
 
-// This function would calculate the actual impact in a real application
-// Here we're just using placeholder logic
+// This function calculates the impact with more realistic asymmetric behavior
 export function calculateVariableImpact(
   variable: AnalysisVariable,
   targetMetric: string,
@@ -70,39 +69,87 @@ export function calculateVariableImpact(
 ): number {
   // Example implementation - in a real app, this would use your financial model
   let sensitivityFactor;
+  let asymmetryFactor = 1.0; // Default symmetric impact
   
   // Determine sensitivity based on the variable category and target metric
   switch (targetMetric) {
     case "NPV":
       sensitivityFactor = variable.metric === "revenue" ? 1.5 : 0.8;
+      // NPV can be more sensitive to negative changes in revenue than positive ones
+      if (variable.metric === "revenue" && percentageChange < 0) {
+        asymmetryFactor = 1.2;
+      }
       break;
     case "IRR":
       sensitivityFactor = variable.metric === "cost" ? 1.2 : 0.6;
+      // IRR typically has non-linear response to large changes
+      asymmetryFactor = Math.abs(percentageChange) > 15 ? 1.1 : 1.0;
       break;
     case "DSCR":
       sensitivityFactor = variable.metric === "revenue" ? 0.7 : 0.4;
+      // DSCR is often more sensitive to negative revenue changes
+      if (variable.metric === "revenue" && percentageChange < 0) {
+        asymmetryFactor = 1.4;
+      }
       break;
     case "LCOE":
       sensitivityFactor = variable.category === "solar" || variable.category === "wind" ? 1.8 : 0.9;
+      // LCOE is more responsive to capex decreases than increases
+      if (variable.metric === "cost" && percentageChange < 0) {
+        asymmetryFactor = 0.9;
+      } else if (variable.metric === "cost" && percentageChange > 0) {
+        asymmetryFactor = 1.1;
+      }
       break;
     case "LCOH":
       sensitivityFactor = variable.category === "hydrogen" ? 2.0 : 0.7;
+      // More sensitivity to electricity price changes on the negative side
+      if (variable.name.includes("Electricity") && percentageChange < 0) {
+        asymmetryFactor = 1.3;
+      }
       break;
     case "Equity IRR":
       sensitivityFactor = variable.metric === "revenue" ? 1.7 : 0.9;
+      // Equity IRR typically more sensitive to decreases
+      asymmetryFactor = percentageChange < 0 ? 1.2 : 1.0;
       break;
     case "Dividend Yield":
       sensitivityFactor = variable.metric === "revenue" ? 1.4 : 0.6;
+      // Yield typically more sensitive to revenue decreases 
+      if (variable.metric === "revenue" && percentageChange < 0) {
+        asymmetryFactor = 1.3;
+      }
       break;
     case "MOIC":
       sensitivityFactor = variable.metric === "cost" ? 1.3 : 0.8;
+      // MOIC might respond asymmetrically to timeline changes
+      if (variable.name.includes("Timeline") || variable.name.includes("Duration")) {
+        asymmetryFactor = percentageChange > 0 ? 1.4 : 0.9;
+      }
+      break;
+    case "Payback":
+      sensitivityFactor = 1.2;
+      // Payback is often more sensitive to negative revenue changes
+      if (variable.metric === "revenue" && percentageChange < 0) {
+        asymmetryFactor = 1.5;
+      }
+      break;
+    case "Gearing Ratio":
+      sensitivityFactor = 0.5;
+      // More sensitive to increases in debt
+      if (variable.name.includes("Debt") && percentageChange > 0) {
+        asymmetryFactor = 1.6;
+      }
       break;
     default:
       sensitivityFactor = 1.0;
   }
   
-  // Calculate impact based on the variable's base value, percentage change, and sensitivity factor
-  const impact = variable.baseValue * (percentageChange / 100) * sensitivityFactor;
+  // Add some randomization to make it more realistic
+  const randomFactor = 0.9 + Math.random() * 0.2; // 0.9 to 1.1
+  
+  // Calculate impact based on the variable's base value, percentage change, sensitivity factor and asymmetry
+  let impact = variable.baseValue * (percentageChange / 100) * sensitivityFactor * asymmetryFactor * randomFactor;
   
   // For certain metrics like IRR and yield rates, the impact should be proportionally smaller
   const proportionalMetrics = ["IRR", "Equity IRR", "Dividend Yield", "DSCR", "LLCR", "PLCR"];

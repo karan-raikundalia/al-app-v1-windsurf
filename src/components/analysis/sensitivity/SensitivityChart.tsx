@@ -4,7 +4,7 @@ import { TornadoChart } from "../TornadoChart";
 import { AnalysisVariable } from "../VariableControl";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, BarChart as BarChartIcon } from "lucide-react";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -13,44 +13,63 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { DataPanel } from "@/components/ui/DataPanel";
+import { EditPanel } from "./EditPanel";
 
 interface SensitivityChartProps {
   selectedVariables: AnalysisVariable[];
   currentMetric: string;
   isLoading: boolean;
   baseValue: number;
+  variableRanges: Record<string, { minPercentage: number; maxPercentage: number }>;
+  onRangeChange: (variableId: string, min: number, max: number) => void;
+  onRemoveVariable: (variableId: string) => void;
+  onUpdateChart: () => void;
+  impacts: Record<string, { positiveImpact: number; negativeImpact: number }>;
 }
 
 export function SensitivityChart({ 
   selectedVariables, 
   currentMetric, 
   isLoading,
-  baseValue
+  baseValue,
+  variableRanges,
+  onRangeChange,
+  onRemoveVariable,
+  onUpdateChart,
+  impacts
 }: SensitivityChartProps) {
   const [sortBy, setSortBy] = useState<"impact" | "alphabetical">("impact");
   const [displayMode, setDisplayMode] = useState<"absolute" | "percentage">("absolute");
+  const [selectedVariable, setSelectedVariable] = useState<string | null>(null);
   
   // Transform the variables data for the TornadoChart component
   const transformedData = selectedVariables.map(variable => {
-    // Calculate positive and negative impacts
-    // For absolute values
-    const positiveImpact = displayMode === "absolute" 
-      ? variable.impact 
-      : (variable.impact / baseValue) * 100;
+    // Get the calculated impacts for this variable
+    const variableImpact = impacts[variable.id] || { positiveImpact: 0, negativeImpact: 0 };
+    
+    // For absolute values or percentage
+    const positiveDelta = displayMode === "absolute" 
+      ? variableImpact.positiveImpact 
+      : (variableImpact.positiveImpact / baseValue) * 100;
       
-    const negativeImpact = displayMode === "absolute" 
-      ? -variable.impact 
-      : -(variable.impact / baseValue) * 100;
+    const negativeDelta = displayMode === "absolute" 
+      ? variableImpact.negativeImpact 
+      : (variableImpact.negativeImpact / baseValue) * 100;
     
     return {
       variable: variable.name,
-      positiveDelta: positiveImpact,
-      negativeDelta: negativeImpact,
+      positiveDelta: positiveDelta,
+      negativeDelta: negativeDelta,
       baseline: baseValue,
       category: variable.category,
-      unit: displayMode === "percentage" ? "%" : variable.unit
+      unit: displayMode === "percentage" ? "%" : variable.unit,
+      variableId: variable.id
     };
   });
+
+  const handleVariableClick = (variableId: string) => {
+    setSelectedVariable(variableId);
+  };
 
   if (isLoading) {
     return (
@@ -69,6 +88,7 @@ export function SensitivityChart({
     return (
       <DataPanel>
         <div className="flex flex-col items-center justify-center py-12">
+          <BarChartIcon className="h-12 w-12 text-muted-foreground mb-4" />
           <p className="text-muted-foreground text-sm">
             Select input variables to visualize their impact on {currentMetric}
           </p>
@@ -78,66 +98,78 @@ export function SensitivityChart({
   }
 
   return (
-    <DataPanel>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">
-            Sensitivity to {currentMetric}
-          </h3>
-          <div className="flex gap-2">
-            <div>
-              <Label htmlFor="sort-by" className="sr-only">Sort by</Label>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" id="sort-by">
-                    Sort: {sortBy === "impact" ? "By Impact" : "Alphabetical"}
-                    <ChevronDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuRadioGroup value={sortBy} onValueChange={(value) => setSortBy(value as "impact" | "alphabetical")}>
-                    <DropdownMenuRadioItem value="impact">By Impact</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="alphabetical">Alphabetical</DropdownMenuRadioItem>
-                  </DropdownMenuRadioGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-            
-            <div>
-              <Label htmlFor="display-mode" className="sr-only">Display mode</Label>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" id="display-mode">
-                    {displayMode === "absolute" ? "Absolute" : "Percentage"}
-                    <ChevronDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuRadioGroup value={displayMode} onValueChange={(value) => setDisplayMode(value as "absolute" | "percentage")}>
-                    <DropdownMenuRadioItem value="absolute">Absolute</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="percentage">Percentage (%)</DropdownMenuRadioItem>
-                  </DropdownMenuRadioGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
+    <div className="relative">
+      <EditPanel 
+        selectedVariables={selectedVariables}
+        currentMetric={currentMetric}
+        variableRanges={variableRanges}
+        onRangeChange={onRangeChange}
+        onRemoveVariable={onRemoveVariable}
+        onUpdateChart={onUpdateChart}
+      />
+      
+      <DataPanel>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">
+              Sensitivity to {currentMetric}
+            </h3>
+            <div className="flex gap-2">
+              <div>
+                <Label htmlFor="sort-by" className="sr-only">Sort by</Label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" id="sort-by">
+                      Sort: {sortBy === "impact" ? "By Impact" : "Alphabetical"}
+                      <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuRadioGroup value={sortBy} onValueChange={(value) => setSortBy(value as "impact" | "alphabetical")}>
+                      <DropdownMenuRadioItem value="impact">By Impact</DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="alphabetical">Alphabetical</DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              
+              <div>
+                <Label htmlFor="display-mode" className="sr-only">Display mode</Label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" id="display-mode">
+                      {displayMode === "absolute" ? "Absolute" : "Percentage"}
+                      <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuRadioGroup value={displayMode} onValueChange={(value) => setDisplayMode(value as "absolute" | "percentage")}>
+                      <DropdownMenuRadioItem value="absolute">Absolute</DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="percentage">Percentage (%)</DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </div>
+          
+          <TornadoChart 
+            data={transformedData}
+            baseValue={0}
+            sortBy={sortBy}
+            onVariableClick={handleVariableClick}
+            chartHeight={Math.max(300, 60 * selectedVariables.length)}
+          />
+          
+          <div className="text-xs text-center text-muted-foreground">
+            {displayMode === "absolute" ? (
+              <p>Values show absolute change in {currentMetric} when variables are adjusted by their defined ranges</p>
+            ) : (
+              <p>Values show percentage change in {currentMetric} when variables are adjusted by their defined ranges</p>
+            )}
+          </div>
         </div>
-        
-        <TornadoChart 
-          data={transformedData}
-          baseValue={0}
-          sortBy={sortBy}
-          onVariableClick={(variable) => console.log("Clicked on:", variable)}
-        />
-        
-        <div className="text-xs text-center text-muted-foreground">
-          {displayMode === "absolute" ? (
-            <p>Values show absolute change in {currentMetric} when each variable is adjusted ±20%</p>
-          ) : (
-            <p>Values show percentage change in {currentMetric} when each variable is adjusted ±20%</p>
-          )}
-        </div>
-      </div>
-    </DataPanel>
+      </DataPanel>
+    </div>
   );
 }
