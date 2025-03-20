@@ -27,7 +27,6 @@ interface VariableControlProps {
   metrics: string[];
   onMetricChange: (metric: string) => void;
   currentMetric: string;
-  maxInfluentialCount?: number;
 }
 
 export function VariableControl({
@@ -36,7 +35,6 @@ export function VariableControl({
   metrics,
   onMetricChange,
   currentMetric,
-  maxInfluentialCount = 10,
 }: VariableControlProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
