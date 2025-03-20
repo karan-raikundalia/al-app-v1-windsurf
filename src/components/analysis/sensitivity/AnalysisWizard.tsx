@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Search, Info, ChevronRight, ChevronLeft, AlertCircle } from "lucide-react";
+import { Search, Info, ChevronRight, ChevronLeft, AlertCircle, Edit } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -51,9 +50,10 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     rangeType: "percentage" | "absolute";
   }>>({});
   const [baseValue, setBaseValue] = useState<number>(0);
+  const [editingVariable, setEditingVariable] = useState<string | null>(null);
   
   const { getAllOutputs } = useOutputs();
-  const { inputs } = useInputs();
+  const { inputs, updateInput } = useInputs();
   const { toast } = useToast();
   
   const outputs = getAllOutputs();
@@ -146,6 +146,43 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     if (!isNaN(value)) {
       setBaseValue(value);
     }
+  };
+  
+  const handleVariableBaseValueChange = (variableId: string, newValue: number) => {
+    setSelectedVariables(prev => 
+      prev.map(variable => 
+        variable.id === variableId 
+          ? { ...variable, baseValue: newValue } 
+          : variable
+      )
+    );
+    
+    if (!variableId.startsWith("derived-")) {
+      const inputToUpdate = inputs.find(input => input.id === variableId);
+      if (inputToUpdate) {
+        updateInput(variableId, { value: newValue });
+        
+        toast({
+          description: `Updated base value for ${inputToUpdate.name} to ${newValue} ${inputToUpdate.unit || ''}`,
+        });
+      }
+    }
+    
+    setVariableRanges(prev => {
+      const currentRange = prev[variableId];
+      if (!currentRange) return prev;
+      
+      const updatedRange = { ...currentRange };
+      
+      if (updatedRange.rangeType === "percentage") {
+        updatedRange.minValue = newValue * (1 - updatedRange.minPercentage / 100);
+        updatedRange.maxValue = newValue * (1 + updatedRange.maxPercentage / 100);
+      }
+      
+      return { ...prev, [variableId]: updatedRange };
+    });
+    
+    setEditingVariable(null);
   };
   
   const handleVariableSelect = (variable: AnalysisVariable) => {
@@ -302,6 +339,7 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
       setSelectedOutput("");
       setSelectedVariables([]);
       setVariableRanges({});
+      setEditingVariable(null);
     }
   }, [isOpen]);
   
@@ -576,6 +614,8 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
                     rangeType: "percentage"
                   };
                   
+                  const isEditing = editingVariable === variable.id;
+                  
                   return (
                     <div key={variable.id} className="space-y-3 pb-4 border-b">
                       <div className="flex items-center justify-between">
@@ -595,8 +635,53 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
                         </Tabs>
                       </div>
                       
-                      <div className="bg-muted/30 p-2 rounded-md text-sm">
-                        Base Value: {formatNumber(variable.baseValue)} {variable.unit}
+                      <div className="bg-muted/30 p-2 rounded-md text-sm flex justify-between items-center">
+                        {isEditing ? (
+                          <div className="flex items-center gap-2">
+                            <Label htmlFor={`base-value-${variable.id}`} className="sr-only">
+                              Base value
+                            </Label>
+                            <Input
+                              id={`base-value-${variable.id}`}
+                              type="number"
+                              value={variable.baseValue}
+                              onChange={(e) => {
+                                const newValue = parseFloat(e.target.value);
+                                if (!isNaN(newValue)) {
+                                  handleVariableBaseValueChange(variable.id, newValue);
+                                }
+                              }}
+                              className="w-24 h-7 text-sm"
+                              autoFocus
+                              onBlur={() => setEditingVariable(null)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  const newValue = parseFloat((e.target as HTMLInputElement).value);
+                                  if (!isNaN(newValue)) {
+                                    handleVariableBaseValueChange(variable.id, newValue);
+                                  }
+                                } else if (e.key === 'Escape') {
+                                  setEditingVariable(null);
+                                }
+                              }}
+                            />
+                            <span>{variable.unit}</span>
+                          </div>
+                        ) : (
+                          <div>
+                            Base Value: {formatNumber(variable.baseValue)} {variable.unit}
+                          </div>
+                        )}
+                        
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-7 px-2 hover:bg-muted"
+                          onClick={() => setEditingVariable(isEditing ? null : variable.id)}
+                        >
+                          <Edit className="h-3.5 w-3.5 mr-1" />
+                          {isEditing ? "Done" : "Edit"}
+                        </Button>
                       </div>
                       
                       <div className="space-y-4">
