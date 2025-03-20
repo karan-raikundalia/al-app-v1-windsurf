@@ -125,7 +125,7 @@ export function SensitivitySummary({
           )}
           <li className="flex gap-2">
             <div className="h-2 w-2 rounded-full bg-red-500 mt-1.5 shrink-0"></div>
-            <p>{highImpactCount} variables have high sensitivity (>10% impact)</p>
+            <p>{highImpactCount} variables have high sensitivity ({'>'}10% impact)</p>
           </li>
           <li className="flex gap-2">
             <div className="h-2 w-2 rounded-full bg-gray-500 mt-1.5 shrink-0"></div>
