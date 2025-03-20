@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { VariableControl, type AnalysisVariable } from "./VariableControl";
 import { DataPanel } from "@/components/ui/DataPanel";
@@ -30,7 +29,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { calculateVariableImpact, transformInputToAnalysisVariable, calculateLCOE, calculateLCOH } from "./sensitivity/SensitivityData";
 
-// Define saved analysis type
 export interface SavedAnalysis {
   id: string;
   name: string;
@@ -44,7 +42,6 @@ export interface SavedAnalysis {
   createdAt: Date;
 }
 
-// Sample saved analyses for demonstration
 const sampleSavedAnalyses: SavedAnalysis[] = [
   {
     id: "analysis-1",
@@ -55,22 +52,34 @@ const sampleSavedAnalyses: SavedAnalysis[] = [
         id: "capex",
         name: "Capital Expenditure",
         baseValue: 1000000,
+        minValue: 800000,
+        maxValue: 1200000,
+        impact: 100000,
         unit: "$",
-        category: "Financial"
+        category: "Financial",
+        metric: "cost"
       },
       {
         id: "opex",
         name: "Operating Expenses",
         baseValue: 50000,
+        minValue: 40000,
+        maxValue: 60000,
+        impact: 5000,
         unit: "$/year",
-        category: "Operations"
+        category: "Operations",
+        metric: "cost"
       },
       {
         id: "production",
         name: "Annual Production",
         baseValue: 10000,
+        minValue: 9000,
+        maxValue: 11000,
+        impact: 1000,
         unit: "MWh",
-        category: "Production"
+        category: "Production",
+        metric: "performance"
       }
     ],
     baseValue: 500000,
@@ -90,15 +99,23 @@ const sampleSavedAnalyses: SavedAnalysis[] = [
         id: "discount-rate",
         name: "Discount Rate",
         baseValue: 8,
+        minValue: 6,
+        maxValue: 10,
+        impact: 0.8,
         unit: "%",
-        category: "Financial"
+        category: "Financial",
+        metric: "cost"
       },
       {
         id: "inflation",
         name: "Inflation Rate",
         baseValue: 2.5,
+        minValue: 1.5,
+        maxValue: 3.5,
+        impact: 0.25,
         unit: "%",
-        category: "Macroeconomic"
+        category: "Macroeconomic",
+        metric: "other"
       }
     ],
     baseValue: 12.5,
@@ -114,7 +131,7 @@ export function SensitivityAnalysis() {
   const [selectedVariables, setSelectedVariables] = useState<AnalysisVariable[]>([]);
   const [currentMetric, setCurrentMetric] = useState("NPV");
   const [isLoading, setIsLoading] = useState(false);
-  const [baseValue, setBaseValue] = useState(1000000); // Default base value for the analysis
+  const [baseValue, setBaseValue] = useState(1000000);
   const [savedAnalyses, setSavedAnalyses] = useState<SavedAnalysis[]>(sampleSavedAnalyses);
   const [analysisName, setAnalysisName] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -127,10 +144,8 @@ export function SensitivityAnalysis() {
   const { getAllOutputs } = useOutputs();
   const { toast } = useToast();
   
-  // Get the list of output metrics from the outputs hook
   const outputMetrics = getAllOutputs().map(output => output.name);
   
-  // Calculate the impact of each variable on the selected metric
   const calculateImpacts = () => {
     setIsLoading(true);
     
@@ -139,7 +154,6 @@ export function SensitivityAnalysis() {
     selectedVariables.forEach(variable => {
       const ranges = variableRanges[variable.id] || { minPercentage: 20, maxPercentage: 20 };
       
-      // Calculate positive impact (increasing the variable)
       const positiveImpact = calculateVariableImpact(
         variable,
         currentMetric,
@@ -147,7 +161,6 @@ export function SensitivityAnalysis() {
         ranges.maxPercentage
       );
       
-      // Calculate negative impact (decreasing the variable)
       const negativeImpact = -calculateVariableImpact(
         variable,
         currentMetric,
@@ -163,36 +176,29 @@ export function SensitivityAnalysis() {
     
     setImpacts(newImpacts);
     
-    // Simulate some calculation time
     setTimeout(() => {
       setIsLoading(false);
     }, 600);
   };
 
-  // Effect to recalculate impacts when variables, ranges, or metric changes
   useEffect(() => {
     if (selectedVariables.length > 0) {
       calculateImpacts();
     }
   }, [selectedVariables, currentMetric, baseValue]);
 
-  // Handle selecting variables for analysis
   const handleVariableSelection = (variables: AnalysisVariable[]) => {
     setSelectedVariables(variables);
   };
 
-  // Handle changing the output metric
   const handleMetricChange = (metric: string) => {
     setCurrentMetric(metric);
     
-    // Find the selected output to get its base value
     const selectedOutput = getAllOutputs().find(output => output.name === metric);
     
-    // Update base value based on the selected metric
     if (selectedOutput) {
       setBaseValue(selectedOutput.value);
     } else {
-      // Fallback to default values if not found in outputs
       const metricBaseValues: Record<string, number> = {
         "NPV": 1000000,
         "IRR": 12,
@@ -214,12 +220,10 @@ export function SensitivityAnalysis() {
     }
   };
   
-  // Handle changing the base value manually
   const handleBaseValueChange = (newBaseValue: number) => {
     setBaseValue(newBaseValue);
   };
   
-  // Handle updating variable ranges
   const handleRangeChange = (variableId: string, minPercentage: number, maxPercentage: number) => {
     setVariableRanges(prev => ({
       ...prev,
@@ -227,18 +231,15 @@ export function SensitivityAnalysis() {
     }));
   };
   
-  // Handle removing a variable
   const handleRemoveVariable = (variableId: string) => {
     setSelectedVariables(prev => prev.filter(v => v.id !== variableId));
     
-    // Also remove from ranges
     setVariableRanges(prev => {
       const newRanges = { ...prev };
       delete newRanges[variableId];
       return newRanges;
     });
     
-    // And from impacts
     setImpacts(prev => {
       const newImpacts = { ...prev };
       delete newImpacts[variableId];
@@ -246,7 +247,6 @@ export function SensitivityAnalysis() {
     });
   };
   
-  // Handle updating the chart after range changes
   const handleUpdateChart = () => {
     calculateImpacts();
     
@@ -255,7 +255,6 @@ export function SensitivityAnalysis() {
     });
   };
   
-  // Handle saving the analysis
   const handleSaveAnalysis = () => {
     if (selectedVariables.length === 0) {
       toast({
@@ -295,13 +294,11 @@ export function SensitivityAnalysis() {
     });
   };
   
-  // Handle duplicating the analysis
   const handleDuplicateAnalysis = () => {
     setAnalysisName(`${currentMetric} Analysis (Copy)`);
     setDialogOpen(true);
   };
   
-  // Handle loading a saved analysis
   const handleLoadAnalysis = (analysis: SavedAnalysis) => {
     setCurrentMetric(analysis.metric);
     setBaseValue(analysis.baseValue);
@@ -309,7 +306,6 @@ export function SensitivityAnalysis() {
     setVariableRanges(analysis.variableRanges);
     setShowAnalysisView(true);
     
-    // Calculate impacts for the loaded analysis
     setIsLoading(true);
     setTimeout(() => {
       calculateImpacts();
@@ -320,7 +316,6 @@ export function SensitivityAnalysis() {
     });
   };
   
-  // Handle deleting a saved analysis
   const handleDeleteAnalysis = (analysisId: string) => {
     setSavedAnalyses(prev => prev.filter(analysis => analysis.id !== analysisId));
     
@@ -329,7 +324,6 @@ export function SensitivityAnalysis() {
     });
   };
   
-  // Handle resetting the analysis
   const handleResetAnalysis = () => {
     setSelectedVariables([]);
     setVariableRanges({});
@@ -340,36 +334,28 @@ export function SensitivityAnalysis() {
     });
   };
   
-  // Handle creating a new analysis using the wizard
   const handleNewAnalysis = () => {
     setWizardOpen(true);
   };
 
-  // Handle export as PNG
   const handleExportPNG = () => {
-    // Placeholder for PNG export functionality
     toast({
       description: "Exporting as PNG... (Not implemented)"
     });
   };
   
-  // Handle export as PDF
   const handleExportPDF = () => {
-    // Placeholder for PDF export functionality
     toast({
       description: "Exporting as PDF... (Not implemented)"
     });
   };
   
-  // Handle export as Excel
   const handleExportExcel = () => {
-    // Placeholder for Excel export functionality
     toast({
       description: "Exporting as Excel... (Not implemented)"
     });
   };
   
-  // Handle completing the wizard
   const handleWizardComplete = (config: {
     outputMetric: string;
     baseValue: number;
@@ -383,7 +369,6 @@ export function SensitivityAnalysis() {
     setWizardOpen(false);
     setShowAnalysisView(true);
     
-    // Calculate impacts for the new configuration
     setIsLoading(true);
     setTimeout(() => {
       calculateImpacts();
@@ -541,7 +526,6 @@ export function SensitivityAnalysis() {
         />
       )}
       
-      {/* Analysis Wizard Modal */}
       <AnalysisWizard 
         isOpen={wizardOpen}
         onClose={() => setWizardOpen(false)}

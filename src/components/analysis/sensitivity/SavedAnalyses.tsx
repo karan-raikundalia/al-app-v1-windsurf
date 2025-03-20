@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { MoreHorizontal, FileText, Trash, Copy, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,10 +30,11 @@ interface SavedAnalysesProps {
     variables: AnalysisVariable[];
     baseValue: number;
     variableRanges: Record<string, { minPercentage: number; maxPercentage: number }>;
+    createdAt: Date;
   }>;
   onDeleteAnalysis: (id: string) => void;
-  onDuplicateAnalysis: (analysis: any) => void;
   onLoadAnalysis: (analysis: any) => void;
+  onNewAnalysis?: () => void;
 }
 
 export function SavedAnalyses({
