@@ -116,11 +116,13 @@ export function TornadoChart({
           data={sortedData}
           margin={{ top: 20, right: 30, bottom: 20, left: 120 }}
           barSize={20}
+          barGap={0}
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
             type="number"
             tickFormatter={formatNumber}
+            domain={['auto', 'auto']}
           />
           <YAxis
             dataKey="variable"
@@ -136,12 +138,18 @@ export function TornadoChart({
             fill="#4ade80"
             onClick={handleClick}
             className="cursor-pointer"
+            isAnimationActive={true}
+            animationDuration={800}
+            animationEasing="ease-out"
           />
           <Bar
             dataKey="negativeDelta"
             fill="#f43f5e"
             onClick={handleClick}
             className="cursor-pointer"
+            isAnimationActive={true}
+            animationDuration={800}
+            animationEasing="ease-out"
           />
         </BarChart>
       </ResponsiveContainer>

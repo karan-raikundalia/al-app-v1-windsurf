@@ -8,7 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useInputs } from "@/hooks/use-inputs";
 import { useOutputs } from "@/hooks/use-outputs";
 import { Button } from "@/components/ui/button";
-import { SaveIcon, RotateCcw, PlusCircle, Copy } from "lucide-react";
+import { SaveIcon, RotateCcw, PlusCircle, Copy, Download } from "lucide-react";
 import { 
   Dialog,
   DialogContent,
@@ -20,6 +20,13 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { AnalysisWizard } from "./sensitivity/AnalysisWizard";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { calculateVariableImpact, transformInputToAnalysisVariable, calculateLCOE, calculateLCOH } from "./sensitivity/SensitivityData";
 
 export function SensitivityAnalysis() {
@@ -37,6 +44,7 @@ export function SensitivityAnalysis() {
   }>>([]);
   const [analysisName, setAnalysisName] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
   const [variableRanges, setVariableRanges] = useState<Record<string, { minPercentage: number; maxPercentage: number }>>({});
   const [impacts, setImpacts] = useState<Record<string, { positiveImpact: number; negativeImpact: number }>>({});
   
@@ -44,68 +52,8 @@ export function SensitivityAnalysis() {
   const { getAllOutputs } = useOutputs();
   const { toast } = useToast();
   
-  // Calculate derived metrics
-  const lcoeValue = calculateLCOE(inputs);
-  const lcohValue = calculateLCOH(inputs);
-  
-  // Add derived metrics to the available variables
-  const derivedMetricInputs = [
-    {
-      id: "derived-lcoe",
-      name: "Levelized Cost of Energy (LCOE)",
-      description: "Calculated LCOE based on project inputs",
-      categoryId: "production",
-      unit: "$/MWh",
-      dataType: "constant" as const,
-      expenseType: "other" as const,
-      value: lcoeValue,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: "derived-lcoh",
-      name: "Levelized Cost of Hydrogen (LCOH)",
-      description: "Calculated LCOH based on project inputs",
-      categoryId: "production",
-      unit: "$/kg",
-      dataType: "constant" as const,
-      expenseType: "other" as const,
-      value: lcohValue,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }
-  ];
-  
   // Get the list of output metrics from the outputs hook
   const outputMetrics = getAllOutputs().map(output => output.name);
-  
-  // Transform inputs to analysis variables whenever inputs change
-  const availableVariables = [
-    ...inputs.map(input => transformInputToAnalysisVariable(input)),
-    ...derivedMetricInputs.map(input => transformInputToAnalysisVariable(input))
-  ];
-
-  // Initialize or update variable ranges when selectedVariables changes
-  useEffect(() => {
-    const newRanges = { ...variableRanges };
-    let updated = false;
-    
-    selectedVariables.forEach(variable => {
-      if (!newRanges[variable.id]) {
-        // Default to ±20% range (can be asymmetric)
-        newRanges[variable.id] = { 
-          minPercentage: 20,
-          maxPercentage: 20 
-        };
-        updated = true;
-      }
-    });
-    
-    if (updated) {
-      setVariableRanges(newRanges);
-      calculateImpacts();
-    }
-  }, [selectedVariables]);
   
   // Calculate the impact of each variable on the selected metric
   const calculateImpacts = () => {
@@ -146,6 +94,13 @@ export function SensitivityAnalysis() {
     }, 600);
   };
 
+  // Effect to recalculate impacts when variables, ranges, or metric changes
+  useEffect(() => {
+    if (selectedVariables.length > 0) {
+      calculateImpacts();
+    }
+  }, [selectedVariables, currentMetric, baseValue]);
+
   // Handle selecting variables for analysis
   const handleVariableSelection = (variables: AnalysisVariable[]) => {
     setSelectedVariables(variables);
@@ -167,8 +122,8 @@ export function SensitivityAnalysis() {
         "NPV": 1000000,
         "IRR": 12,
         "DSCR": 1.5,
-        "LCOE": lcoeValue || 45,
-        "LCOH": lcohValue || 4.5,
+        "LCOE": calculateLCOE(inputs) || 45,
+        "LCOH": calculateLCOH(inputs) || 4.5,
         "Payback": 5,
         "Equity IRR": 15,
         "MOIC": 2.5,
@@ -182,15 +137,11 @@ export function SensitivityAnalysis() {
       
       setBaseValue(metricBaseValues[metric] || 0);
     }
-    
-    // Recalculate impacts with the new metric
-    calculateImpacts();
   };
   
   // Handle changing the base value manually
   const handleBaseValueChange = (newBaseValue: number) => {
     setBaseValue(newBaseValue);
-    calculateImpacts();
   };
   
   // Handle updating variable ranges
@@ -284,10 +235,57 @@ export function SensitivityAnalysis() {
     });
   };
   
-  // Handle creating a new analysis
+  // Handle creating a new analysis using the wizard
   const handleNewAnalysis = () => {
-    handleResetAnalysis();
-    setAnalysisName("");
+    setWizardOpen(true);
+  };
+
+  // Handle export as PNG
+  const handleExportPNG = () => {
+    // Placeholder for PNG export functionality
+    toast({
+      description: "Exporting as PNG... (Not implemented)"
+    });
+  };
+  
+  // Handle export as PDF
+  const handleExportPDF = () => {
+    // Placeholder for PDF export functionality
+    toast({
+      description: "Exporting as PDF... (Not implemented)"
+    });
+  };
+  
+  // Handle export as Excel
+  const handleExportExcel = () => {
+    // Placeholder for Excel export functionality
+    toast({
+      description: "Exporting as Excel... (Not implemented)"
+    });
+  };
+  
+  // Handle completing the wizard
+  const handleWizardComplete = (config: {
+    outputMetric: string;
+    baseValue: number;
+    selectedVariables: AnalysisVariable[];
+    variableRanges: Record<string, { minPercentage: number; maxPercentage: number }>;
+  }) => {
+    setCurrentMetric(config.outputMetric);
+    setBaseValue(config.baseValue);
+    setSelectedVariables(config.selectedVariables);
+    setVariableRanges(config.variableRanges);
+    setWizardOpen(false);
+    
+    // Calculate impacts for the new configuration
+    setIsLoading(true);
+    setTimeout(() => {
+      calculateImpacts();
+    }, 100);
+    
+    toast({
+      description: "New sensitivity analysis created successfully"
+    });
   };
 
   return (
@@ -295,12 +293,22 @@ export function SensitivityAnalysis() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">Sensitivity Analysis</h1>
         <div className="flex gap-2">
+          <Button 
+            size="sm" 
+            onClick={handleNewAnalysis}
+            className="flex items-center gap-1"
+          >
+            <PlusCircle className="h-4 w-4" />
+            New Analysis
+          </Button>
+          
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button 
                 variant="outline" 
                 size="sm" 
                 className="flex items-center gap-1"
+                disabled={selectedVariables.length === 0}
               >
                 <SaveIcon className="h-4 w-4" />
                 Save Analysis
@@ -339,10 +347,36 @@ export function SensitivityAnalysis() {
             </DialogContent>
           </Dialog>
           
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm"
+                disabled={selectedVariables.length === 0}
+                className="flex items-center gap-1"
+              >
+                <Download className="h-4 w-4" />
+                Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleExportPNG}>
+                Export as PNG
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportPDF}>
+                Export as PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportExcel}>
+                Export as Excel
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
           <Button 
             variant="outline" 
             size="sm" 
             onClick={handleDuplicateAnalysis}
+            disabled={selectedVariables.length === 0}
             className="flex items-center gap-1"
           >
             <Copy className="h-4 w-4" />
@@ -352,17 +386,8 @@ export function SensitivityAnalysis() {
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={handleNewAnalysis}
-            className="flex items-center gap-1"
-          >
-            <PlusCircle className="h-4 w-4" />
-            New Analysis
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            size="sm" 
             onClick={handleResetAnalysis}
+            disabled={selectedVariables.length === 0}
             className="flex items-center gap-1"
           >
             <RotateCcw className="h-4 w-4" />
@@ -372,40 +397,56 @@ export function SensitivityAnalysis() {
       </div>
       
       <p className="text-muted-foreground max-w-4xl">
-        Understand how different variables impact your project outcomes. Select an output metric, 
-        choose input variables to analyze, and visualize their impact with an interactive tornado chart.
+        Understand how different variables impact your project outcomes. Create a new analysis to 
+        select an output metric, choose input variables to analyze, and visualize their impact 
+        with an interactive tornado chart.
       </p>
       
-      <DataPanel>
-        <VariableControl
-          availableVariables={availableVariables}
-          onVariableSelection={handleVariableSelection}
-          selectedVariables={selectedVariables}
-          metrics={outputMetrics}
-          onMetricChange={handleMetricChange}
-          currentMetric={currentMetric}
-          baseValue={baseValue}
-          onBaseValueChange={handleBaseValueChange}
-          showBaseValueInput={false}
-        />
-      </DataPanel>
+      {selectedVariables.length === 0 ? (
+        <DataPanel>
+          <div className="flex flex-col items-center justify-center py-16">
+            <h2 className="text-xl font-medium mb-4">Create a New Sensitivity Analysis</h2>
+            <p className="text-muted-foreground text-center max-w-lg mb-6">
+              Understand how different input variables affect your project outcomes through 
+              an interactive tornado chart visualization.
+            </p>
+            <Button 
+              size="lg" 
+              onClick={handleNewAnalysis}
+              className="flex items-center gap-2"
+            >
+              <PlusCircle className="h-5 w-5" />
+              New Sensitivity Analysis
+            </Button>
+          </div>
+        </DataPanel>
+      ) : (
+        <>
+          <SensitivityChart 
+            selectedVariables={selectedVariables}
+            currentMetric={currentMetric}
+            isLoading={isLoading}
+            baseValue={baseValue}
+            variableRanges={variableRanges}
+            onRangeChange={handleRangeChange}
+            onRemoveVariable={handleRemoveVariable}
+            onUpdateChart={handleUpdateChart}
+            impacts={impacts}
+          />
+          
+          <SensitivitySummary 
+            selectedVariables={selectedVariables}
+            currentMetric={currentMetric}
+            baseValue={baseValue}
+          />
+        </>
+      )}
       
-      <SensitivityChart 
-        selectedVariables={selectedVariables}
-        currentMetric={currentMetric}
-        isLoading={isLoading}
-        baseValue={baseValue}
-        variableRanges={variableRanges}
-        onRangeChange={handleRangeChange}
-        onRemoveVariable={handleRemoveVariable}
-        onUpdateChart={handleUpdateChart}
-        impacts={impacts}
-      />
-      
-      <SensitivitySummary 
-        selectedVariables={selectedVariables}
-        currentMetric={currentMetric}
-        baseValue={baseValue}
+      {/* Analysis Wizard Modal */}
+      <AnalysisWizard 
+        isOpen={wizardOpen}
+        onClose={() => setWizardOpen(false)}
+        onComplete={handleWizardComplete}
       />
     </div>
   );
