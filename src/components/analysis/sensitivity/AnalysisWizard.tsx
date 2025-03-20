@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,7 @@ import { useOutputs } from "@/hooks/use-outputs";
 import { useInputs } from "@/hooks/use-inputs";
 import { transformInputToAnalysisVariable } from "./SensitivityData";
 import { calculateLCOE, calculateLCOH } from "./SensitivityData";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { formatNumber } from "@/lib/utils";
 
 interface AnalysisWizardProps {
@@ -702,5 +703,33 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
         </DialogHeader>
         
         <div className="py-2">
-          <
-
+          {renderStepContent()}
+        </div>
+        
+        <div className="flex items-center justify-end gap-2">
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          
+          {step > 1 && (
+            <Button variant="outline" onClick={handlePrevStep}>
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              Back
+            </Button>
+          )}
+          
+          <Button onClick={handleNextStep} disabled={!isNextEnabled()}>
+            {step === 3 ? (
+              "Generate Chart"
+            ) : (
+              <>
+                Next
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </>
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
