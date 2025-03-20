@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -56,14 +55,11 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
   const { inputs } = useInputs();
   const { toast } = useToast();
   
-  // Available outputs from the outputs hook
   const outputs = getAllOutputs();
   
-  // Calculate derived metrics
   const lcoeValue = calculateLCOE(inputs);
   const lcohValue = calculateLCOH(inputs);
   
-  // Add derived metrics to available variables
   const derivedMetricInputs = [
     {
       id: "derived-lcoe",
@@ -91,13 +87,11 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     }
   ];
   
-  // Transform inputs to analysis variables
   const availableVariables = [
     ...inputs.map(input => transformInputToAnalysisVariable(input)),
     ...derivedMetricInputs.map(input => transformInputToAnalysisVariable(input))
   ];
   
-  // Filter variables by search term
   const filteredOutputs = outputs.filter(output => 
     output.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -107,7 +101,6 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     !selectedVariables.some(selected => selected.id === variable.id)
   );
   
-  // Group variables by category
   const groupedVariables: Record<string, AnalysisVariable[]> = {};
   
   filteredVariables.forEach(variable => {
@@ -118,14 +111,11 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     groupedVariables[category].push(variable);
   });
   
-  // Handle output selection
   const handleOutputSelect = (value: string) => {
     setSelectedOutput(value);
     
-    // Find the selected output to get its base value
     const output = outputs.find(o => o.name === value);
     
-    // Update base value based on the selected metric
     if (output) {
       setBaseValue(output.value);
     } else {
@@ -150,11 +140,16 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     }
   };
   
-  // Handle variable selection
+  const handleBaseValueChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(event.target.value);
+    if (!isNaN(value)) {
+      setBaseValue(value);
+    }
+  };
+  
   const handleVariableSelect = (variable: AnalysisVariable) => {
     setSelectedVariables(prev => [...prev, variable]);
     
-    // Initialize range with default values (±20%)
     setVariableRanges(prev => ({
       ...prev,
       [variable.id]: {
@@ -167,11 +162,9 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     }));
   };
   
-  // Handle variable removal
   const handleVariableRemove = (variableId: string) => {
     setSelectedVariables(prev => prev.filter(v => v.id !== variableId));
     
-    // Also remove from ranges
     setVariableRanges(prev => {
       const newRanges = { ...prev };
       delete newRanges[variableId];
@@ -179,7 +172,6 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     });
   };
   
-  // Handle percentage change
   const handlePercentageChange = (variableId: string, type: "min" | "max", value: number) => {
     setVariableRanges(prev => {
       const variable = selectedVariables.find(v => v.id === variableId);
@@ -209,7 +201,6 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     });
   };
   
-  // Handle absolute value change
   const handleValueChange = (variableId: string, type: "min" | "max", value: number) => {
     setVariableRanges(prev => {
       const variable = selectedVariables.find(v => v.id === variableId);
@@ -241,7 +232,6 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     });
   };
   
-  // Handle range type toggle
   const handleRangeTypeChange = (variableId: string, type: "percentage" | "absolute") => {
     setVariableRanges(prev => {
       const currentRange = prev[variableId];
@@ -257,7 +247,6 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     });
   };
   
-  // Apply common percentage to all variables
   const applyCommonPercentage = (percentage: number) => {
     const newRanges = { ...variableRanges };
     
@@ -278,12 +267,10 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     });
   };
   
-  // Handle next step
   const handleNextStep = () => {
     if (step < 3) {
       setStep(step + 1);
     } else {
-      // Complete the wizard
       const config = {
         outputMetric: selectedOutput,
         baseValue,
@@ -301,14 +288,12 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     }
   };
   
-  // Handle previous step
   const handlePrevStep = () => {
     if (step > 1) {
       setStep(step - 1);
     }
   };
   
-  // Reset the wizard state when it opens
   useEffect(() => {
     if (isOpen) {
       setStep(1);
@@ -319,7 +304,6 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     }
   }, [isOpen]);
   
-  // Determine if the next button should be enabled
   const isNextEnabled = () => {
     switch (step) {
       case 1:
@@ -333,7 +317,6 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     }
   };
   
-  // Render the wizard step content
   const renderStepContent = () => {
     switch (step) {
       case 1:
@@ -399,12 +382,23 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
             </ScrollArea>
             
             {selectedOutput && (
-              <div className="bg-muted/50 p-3 rounded-md">
+              <div className="bg-muted/50 p-3 rounded-md space-y-3">
                 <h4 className="text-sm font-medium">Selected Metric</h4>
                 <p className="text-sm">{selectedOutput}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Base value: {formatNumber(baseValue)}
-                </p>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="base-value">Base value</Label>
+                  <Input
+                    id="base-value"
+                    type="number"
+                    value={baseValue}
+                    onChange={handleBaseValueChange}
+                    className="max-w-[200px]"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    This value will be used as the center point for the sensitivity analysis.
+                  </p>
+                </div>
               </div>
             )}
           </div>
@@ -491,7 +485,6 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
                               <TooltipContent>
                                 <p>Base value: {formatNumber(variable.baseValue)} {variable.unit}</p>
                                 <p className="text-xs text-muted-foreground">
-                                  {/* Fix - Don't use description property directly since it doesn't exist */}
                                   {variable.name} - {variable.category || "Unknown category"}
                                 </p>
                               </TooltipContent>
@@ -709,68 +702,5 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
         </DialogHeader>
         
         <div className="py-2">
-          {/* Progress indicator */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-1.5">
-              {[1, 2, 3].map((stepNum) => (
-                <div 
-                  key={stepNum}
-                  className={`flex items-center justify-center h-8 w-8 rounded-full border text-sm
-                    ${step === stepNum ? 
-                      'bg-primary text-primary-foreground border-primary' : 
-                      step > stepNum ? 
-                        'bg-primary/20 text-primary border-primary/30' : 
-                        'bg-muted text-muted-foreground border-muted-foreground/20'
-                    }`}
-                >
-                  {stepNum}
-                </div>
-              ))}
-            </div>
-            <span className="text-sm text-muted-foreground">
-              Step {step} of 3
-            </span>
-          </div>
-          
-          {renderStepContent()}
-          
-          {/* Navigation buttons */}
-          <div className="flex justify-between mt-6 pt-4 border-t">
-            <Button
-              variant="outline"
-              onClick={onClose}
-            >
-              Cancel
-            </Button>
-            <div className="flex gap-2">
-              {step > 1 && (
-                <Button
-                  variant="outline"
-                  onClick={handlePrevStep}
-                  className="flex items-center gap-1"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Back
-                </Button>
-              )}
-              <Button
-                onClick={handleNextStep}
-                disabled={!isNextEnabled()}
-                className="flex items-center gap-1"
-              >
-                {step < 3 ? (
-                  <>
-                    Next
-                    <ChevronRight className="h-4 w-4" />
-                  </>
-                ) : (
-                  'Generate Chart'
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
+          <
+

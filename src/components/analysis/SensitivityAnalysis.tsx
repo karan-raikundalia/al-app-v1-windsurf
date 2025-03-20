@@ -4,6 +4,7 @@ import { VariableControl, type AnalysisVariable } from "./VariableControl";
 import { DataPanel } from "@/components/ui/DataPanel";
 import { SensitivityChart } from "./sensitivity/SensitivityChart";
 import { SensitivitySummary } from "./sensitivity/SensitivitySummary";
+import { SavedAnalyses } from "./sensitivity/SavedAnalyses";
 import { useToast } from "@/components/ui/use-toast";
 import { useInputs } from "@/hooks/use-inputs";
 import { useOutputs } from "@/hooks/use-outputs";
@@ -29,24 +30,98 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { calculateVariableImpact, transformInputToAnalysisVariable, calculateLCOE, calculateLCOH } from "./sensitivity/SensitivityData";
 
+// Define saved analysis type
+export interface SavedAnalysis {
+  id: string;
+  name: string;
+  metric: string;
+  variables: AnalysisVariable[];
+  baseValue: number;
+  variableRanges: Record<string, { 
+    minPercentage: number; 
+    maxPercentage: number; 
+  }>;
+  createdAt: Date;
+}
+
+// Sample saved analyses for demonstration
+const sampleSavedAnalyses: SavedAnalysis[] = [
+  {
+    id: "analysis-1",
+    name: "NPV Sensitivity - Base Case",
+    metric: "NPV",
+    variables: [
+      {
+        id: "capex",
+        name: "Capital Expenditure",
+        baseValue: 1000000,
+        unit: "$",
+        category: "Financial"
+      },
+      {
+        id: "opex",
+        name: "Operating Expenses",
+        baseValue: 50000,
+        unit: "$/year",
+        category: "Operations"
+      },
+      {
+        id: "production",
+        name: "Annual Production",
+        baseValue: 10000,
+        unit: "MWh",
+        category: "Production"
+      }
+    ],
+    baseValue: 500000,
+    variableRanges: {
+      "capex": { minPercentage: 20, maxPercentage: 20 },
+      "opex": { minPercentage: 15, maxPercentage: 15 },
+      "production": { minPercentage: 10, maxPercentage: 10 }
+    },
+    createdAt: new Date(2023, 9, 15)
+  },
+  {
+    id: "analysis-2",
+    name: "IRR Sensitivity Analysis",
+    metric: "IRR",
+    variables: [
+      {
+        id: "discount-rate",
+        name: "Discount Rate",
+        baseValue: 8,
+        unit: "%",
+        category: "Financial"
+      },
+      {
+        id: "inflation",
+        name: "Inflation Rate",
+        baseValue: 2.5,
+        unit: "%",
+        category: "Macroeconomic"
+      }
+    ],
+    baseValue: 12.5,
+    variableRanges: {
+      "discount-rate": { minPercentage: 25, maxPercentage: 25 },
+      "inflation": { minPercentage: 40, maxPercentage: 40 }
+    },
+    createdAt: new Date(2023, 10, 22)
+  }
+];
+
 export function SensitivityAnalysis() {
   const [selectedVariables, setSelectedVariables] = useState<AnalysisVariable[]>([]);
   const [currentMetric, setCurrentMetric] = useState("NPV");
   const [isLoading, setIsLoading] = useState(false);
   const [baseValue, setBaseValue] = useState(1000000); // Default base value for the analysis
-  const [savedAnalyses, setSavedAnalyses] = useState<Array<{
-    id: string;
-    name: string;
-    metric: string;
-    variables: AnalysisVariable[];
-    baseValue: number;
-    variableRanges: Record<string, { minPercentage: number; maxPercentage: number }>;
-  }>>([]);
+  const [savedAnalyses, setSavedAnalyses] = useState<SavedAnalysis[]>(sampleSavedAnalyses);
   const [analysisName, setAnalysisName] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [variableRanges, setVariableRanges] = useState<Record<string, { minPercentage: number; maxPercentage: number }>>({});
   const [impacts, setImpacts] = useState<Record<string, { positiveImpact: number; negativeImpact: number }>>({});
+  const [showAnalysisView, setShowAnalysisView] = useState(false);
   
   const { inputs } = useInputs();
   const { getAllOutputs } = useOutputs();
@@ -201,13 +276,14 @@ export function SensitivityAnalysis() {
     }
     
     const id = `analysis-${Date.now()}`;
-    const newSavedAnalysis = {
+    const newSavedAnalysis: SavedAnalysis = {
       id,
       name: analysisName,
       metric: currentMetric,
       variables: selectedVariables,
       baseValue,
-      variableRanges
+      variableRanges,
+      createdAt: new Date()
     };
     
     setSavedAnalyses(prev => [...prev, newSavedAnalysis]);
@@ -225,11 +301,40 @@ export function SensitivityAnalysis() {
     setDialogOpen(true);
   };
   
+  // Handle loading a saved analysis
+  const handleLoadAnalysis = (analysis: SavedAnalysis) => {
+    setCurrentMetric(analysis.metric);
+    setBaseValue(analysis.baseValue);
+    setSelectedVariables(analysis.variables);
+    setVariableRanges(analysis.variableRanges);
+    setShowAnalysisView(true);
+    
+    // Calculate impacts for the loaded analysis
+    setIsLoading(true);
+    setTimeout(() => {
+      calculateImpacts();
+    }, 100);
+    
+    toast({
+      description: `Loaded analysis: ${analysis.name}`
+    });
+  };
+  
+  // Handle deleting a saved analysis
+  const handleDeleteAnalysis = (analysisId: string) => {
+    setSavedAnalyses(prev => prev.filter(analysis => analysis.id !== analysisId));
+    
+    toast({
+      description: "Analysis deleted"
+    });
+  };
+  
   // Handle resetting the analysis
   const handleResetAnalysis = () => {
     setSelectedVariables([]);
     setVariableRanges({});
     setImpacts({});
+    setShowAnalysisView(false);
     toast({
       description: "Analysis has been reset. You can now start a new analysis."
     });
@@ -276,6 +381,7 @@ export function SensitivityAnalysis() {
     setSelectedVariables(config.selectedVariables);
     setVariableRanges(config.variableRanges);
     setWizardOpen(false);
+    setShowAnalysisView(true);
     
     // Calculate impacts for the new configuration
     setIsLoading(true);
@@ -302,97 +408,101 @@ export function SensitivityAnalysis() {
             New Analysis
           </Button>
           
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
+          {showAnalysisView && (
+            <>
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center gap-1"
+                    disabled={selectedVariables.length === 0}
+                  >
+                    <SaveIcon className="h-4 w-4" />
+                    Save Analysis
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Save Analysis</DialogTitle>
+                    <DialogDescription>
+                      Enter a name for your sensitivity analysis to save it for later reference.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="analysis-name">Analysis Name</Label>
+                      <Input 
+                        id="analysis-name" 
+                        placeholder="e.g., Hydrogen Project IRR Sensitivity" 
+                        value={analysisName}
+                        onChange={(e) => setAnalysisName(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm font-normal text-muted-foreground">Output Metric</Label>
+                      <p className="text-sm">{currentMetric}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm font-normal text-muted-foreground">Variables</Label>
+                      <p className="text-sm">{selectedVariables.length} variables selected</p>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+                    <Button onClick={handleSaveAnalysis}>Save Analysis</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    disabled={selectedVariables.length === 0}
+                    className="flex items-center gap-1"
+                  >
+                    <Download className="h-4 w-4" />
+                    Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleExportPNG}>
+                    Export as PNG
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportPDF}>
+                    Export as PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportExcel}>
+                    Export as Excel
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="flex items-center gap-1"
+                onClick={handleDuplicateAnalysis}
                 disabled={selectedVariables.length === 0}
+                className="flex items-center gap-1"
               >
-                <SaveIcon className="h-4 w-4" />
-                Save Analysis
+                <Copy className="h-4 w-4" />
+                Duplicate
               </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Save Analysis</DialogTitle>
-                <DialogDescription>
-                  Enter a name for your sensitivity analysis to save it for later reference.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="analysis-name">Analysis Name</Label>
-                  <Input 
-                    id="analysis-name" 
-                    placeholder="e.g., Hydrogen Project IRR Sensitivity" 
-                    value={analysisName}
-                    onChange={(e) => setAnalysisName(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-sm font-normal text-muted-foreground">Output Metric</Label>
-                  <p className="text-sm">{currentMetric}</p>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-sm font-normal text-muted-foreground">Variables</Label>
-                  <p className="text-sm">{selectedVariables.length} variables selected</p>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleSaveAnalysis}>Save Analysis</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+              
               <Button 
                 variant="outline" 
-                size="sm"
+                size="sm" 
+                onClick={handleResetAnalysis}
                 disabled={selectedVariables.length === 0}
                 className="flex items-center gap-1"
               >
-                <Download className="h-4 w-4" />
-                Export
+                <RotateCcw className="h-4 w-4" />
+                Reset
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleExportPNG}>
-                Export as PNG
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportPDF}>
-                Export as PDF
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleExportExcel}>
-                Export as Excel
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleDuplicateAnalysis}
-            disabled={selectedVariables.length === 0}
-            className="flex items-center gap-1"
-          >
-            <Copy className="h-4 w-4" />
-            Duplicate
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleResetAnalysis}
-            disabled={selectedVariables.length === 0}
-            className="flex items-center gap-1"
-          >
-            <RotateCcw className="h-4 w-4" />
-            Reset
-          </Button>
+            </>
+          )}
         </div>
       </div>
       
@@ -402,25 +512,7 @@ export function SensitivityAnalysis() {
         with an interactive tornado chart.
       </p>
       
-      {selectedVariables.length === 0 ? (
-        <DataPanel>
-          <div className="flex flex-col items-center justify-center py-16">
-            <h2 className="text-xl font-medium mb-4">Create a New Sensitivity Analysis</h2>
-            <p className="text-muted-foreground text-center max-w-lg mb-6">
-              Understand how different input variables affect your project outcomes through 
-              an interactive tornado chart visualization.
-            </p>
-            <Button 
-              size="lg" 
-              onClick={handleNewAnalysis}
-              className="flex items-center gap-2"
-            >
-              <PlusCircle className="h-5 w-5" />
-              New Sensitivity Analysis
-            </Button>
-          </div>
-        </DataPanel>
-      ) : (
+      {showAnalysisView ? (
         <>
           <SensitivityChart 
             selectedVariables={selectedVariables}
@@ -440,6 +532,13 @@ export function SensitivityAnalysis() {
             baseValue={baseValue}
           />
         </>
+      ) : (
+        <SavedAnalyses 
+          analyses={savedAnalyses}
+          onLoadAnalysis={handleLoadAnalysis}
+          onDeleteAnalysis={handleDeleteAnalysis}
+          onNewAnalysis={handleNewAnalysis}
+        />
       )}
       
       {/* Analysis Wizard Modal */}
