@@ -40,6 +40,7 @@ interface VariableControlProps {
   currentMetric: string;
   baseValue: number;
   onBaseValueChange: (value: number) => void;
+  showBaseValueInput?: boolean; // New optional prop with default value
 }
 
 export function VariableControl({
@@ -50,7 +51,8 @@ export function VariableControl({
   onMetricChange,
   currentMetric,
   baseValue,
-  onBaseValueChange
+  onBaseValueChange,
+  showBaseValueInput = true // Default to true for backward compatibility
 }: VariableControlProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredVariables, setFilteredVariables] = useState<AnalysisVariable[]>(availableVariables);
@@ -174,32 +176,34 @@ export function VariableControl({
           </DropdownMenu>
         </div>
         
-        <div className="flex-1 min-w-[250px]">
-          <Label htmlFor="baseValue">Base Value</Label>
-          <div className="flex items-center gap-2 mt-2">
-            <Button 
-              variant="outline" 
-              size="icon"
-              onClick={() => handleBaseValueAdjust(-Math.max(1, baseValue * 0.01))}
-            >
-              <Minus className="h-4 w-4" />
-            </Button>
-            <Input
-              id="baseValue"
-              type="number"
-              value={baseValue}
-              onChange={handleBaseValueInput}
-              className="text-center"
-            />
-            <Button 
-              variant="outline" 
-              size="icon"
-              onClick={() => handleBaseValueAdjust(Math.max(1, baseValue * 0.01))}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
+        {showBaseValueInput && (
+          <div className="flex-1 min-w-[250px]">
+            <Label htmlFor="baseValue">Base Value</Label>
+            <div className="flex items-center gap-2 mt-2">
+              <Button 
+                variant="outline" 
+                size="icon"
+                onClick={() => handleBaseValueAdjust(-Math.max(1, baseValue * 0.01))}
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <Input
+                id="baseValue"
+                type="number"
+                value={baseValue}
+                onChange={handleBaseValueInput}
+                className="text-center"
+              />
+              <Button 
+                variant="outline" 
+                size="icon"
+                onClick={() => handleBaseValueAdjust(Math.max(1, baseValue * 0.01))}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
       
       <Separator />

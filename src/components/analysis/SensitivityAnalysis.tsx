@@ -178,6 +178,7 @@ export function SensitivityAnalysis() {
           currentMetric={currentMetric}
           baseValue={baseValue}
           onBaseValueChange={handleBaseValueChange}
+          showBaseValueInput={false} // Added this prop to control base value input visibility
         />
       </DataPanel>
       
