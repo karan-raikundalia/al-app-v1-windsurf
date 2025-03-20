@@ -4,64 +4,156 @@ import { VariableControl, type AnalysisVariable } from "./VariableControl";
 import { DataPanel } from "@/components/ui/DataPanel";
 import { SensitivityChart } from "./sensitivity/SensitivityChart";
 import { SensitivitySummary } from "./sensitivity/SensitivitySummary";
-import { sampleVariables, metrics } from "./sensitivity/SensitivityData";
+import { useToast } from "@/components/ui/use-toast";
+import { useInputs } from "@/hooks/use-inputs";
+import { Button } from "@/components/ui/button";
+import { SaveIcon, RotateCcw } from "lucide-react";
+import { metrics, transformInputToAnalysisVariable } from "./sensitivity/SensitivityData";
 
 export function SensitivityAnalysis() {
-  const [filteredVariables, setFilteredVariables] = useState<AnalysisVariable[]>([]);
-  const [currentMetric, setCurrentMetric] = useState("Cost");
-  const [isLoading, setIsLoading] = useState(true);
+  const [selectedVariables, setSelectedVariables] = useState<AnalysisVariable[]>([]);
+  const [currentMetric, setCurrentMetric] = useState("NPV");
+  const [isLoading, setIsLoading] = useState(false);
+  const [baseValue, setBaseValue] = useState(1000000); // Default base value for the analysis
+  const [savedAnalyses, setSavedAnalyses] = useState<Array<{
+    id: string;
+    name: string;
+    metric: string;
+    variables: AnalysisVariable[];
+    baseValue: number;
+  }>>([]);
+  
+  const { inputs } = useInputs();
+  const { toast } = useToast();
+  
+  // Transform inputs to analysis variables whenever inputs change
+  const availableVariables = inputs.map(input => 
+    transformInputToAnalysisVariable(input)
+  );
 
-  useEffect(() => {
-    // Simulate loading data
-    const timer = setTimeout(() => {
-      setFilteredVariables(sampleVariables);
-      setIsLoading(false);
-    }, 800);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const handleFilterChange = (variables: AnalysisVariable[]) => {
-    setFilteredVariables(variables);
+  const handleVariableSelection = (variables: AnalysisVariable[]) => {
+    setSelectedVariables(variables);
   };
 
   const handleMetricChange = (metric: string) => {
     setCurrentMetric(metric);
     
-    // In a real application, we would fetch new data based on the metric
-    // Here we'll just simulate it by setting isLoading briefly
+    // Update base value based on the selected metric
+    // In a real app, this would come from your financial model
+    const metricBaseValues: Record<string, number> = {
+      "NPV": 1000000,
+      "IRR": 12,
+      "DSCR": 1.5,
+      "LCOE": 45,
+      "Payback": 5,
+      "LCOH": 4.5,
+      "Equity IRR": 15,
+      "MOIC": 2.5
+    };
+    
+    setBaseValue(metricBaseValues[metric] || 0);
+    
+    // Simulate loading
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
-    }, 500);
+    }, 800);
+  };
+  
+  const handleBaseValueChange = (newBaseValue: number) => {
+    setBaseValue(newBaseValue);
+  };
+  
+  const handleSaveAnalysis = () => {
+    if (selectedVariables.length === 0) {
+      toast({
+        title: "No variables selected",
+        description: "Please select at least one variable to save this analysis.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const id = `analysis-${Date.now()}`;
+    const newSavedAnalysis = {
+      id,
+      name: `${currentMetric} Analysis ${savedAnalyses.length + 1}`,
+      metric: currentMetric,
+      variables: selectedVariables,
+      baseValue
+    };
+    
+    setSavedAnalyses(prev => [...prev, newSavedAnalysis]);
+    
+    toast({
+      title: "Analysis saved",
+      description: `${currentMetric} analysis has been saved and can be accessed later.`
+    });
+  };
+  
+  const handleResetAnalysis = () => {
+    setSelectedVariables([]);
+    toast({
+      description: "Analysis has been reset. You can now start a new analysis."
+    });
   };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">Sensitivity Analysis</h1>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleSaveAnalysis}
+            className="flex items-center gap-1"
+          >
+            <SaveIcon className="h-4 w-4" />
+            Save Analysis
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleResetAnalysis}
+            className="flex items-center gap-1"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Reset
+          </Button>
+        </div>
       </div>
+      
       <p className="text-muted-foreground max-w-4xl">
-        Understand how different variables impact your project outcomes. Use the controls below to filter variables 
-        and view their impact on cost, schedule, and performance.
+        Understand how different variables impact your project outcomes. Select an output metric, 
+        choose input variables to analyze, and visualize their impact with an interactive tornado chart.
       </p>
       
       <DataPanel>
         <VariableControl
-          variables={sampleVariables}
-          onFilterChange={handleFilterChange}
+          availableVariables={availableVariables}
+          onVariableSelection={handleVariableSelection}
+          selectedVariables={selectedVariables}
           metrics={metrics}
           onMetricChange={handleMetricChange}
           currentMetric={currentMetric}
+          baseValue={baseValue}
+          onBaseValueChange={handleBaseValueChange}
         />
       </DataPanel>
       
       <SensitivityChart 
-        filteredVariables={filteredVariables}
+        selectedVariables={selectedVariables}
         currentMetric={currentMetric}
         isLoading={isLoading}
+        baseValue={baseValue}
       />
       
-      <SensitivitySummary />
+      <SensitivitySummary 
+        selectedVariables={selectedVariables}
+        currentMetric={currentMetric}
+        baseValue={baseValue}
+      />
     </div>
   );
 }
