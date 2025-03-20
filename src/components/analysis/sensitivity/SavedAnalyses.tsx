@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { MoreHorizontal, FileText, Trash, Copy, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ interface SavedAnalysesProps {
   }>;
   onDeleteAnalysis: (id: string) => void;
   onLoadAnalysis: (analysis: any) => void;
+  onDuplicateAnalysis: (analysis: any) => void;
   onNewAnalysis?: () => void;
 }
 

@@ -519,9 +519,10 @@ export function SensitivityAnalysis() {
         </>
       ) : (
         <SavedAnalyses 
-          analyses={savedAnalyses}
+          savedAnalyses={savedAnalyses}
           onLoadAnalysis={handleLoadAnalysis}
           onDeleteAnalysis={handleDeleteAnalysis}
+          onDuplicateAnalysis={handleDuplicateAnalysis}
           onNewAnalysis={handleNewAnalysis}
         />
       )}
