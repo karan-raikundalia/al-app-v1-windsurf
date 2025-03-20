@@ -1,12 +1,14 @@
 
 import { useState } from "react";
-import { PlusCircle, Database, Info } from "lucide-react";
+import { PlusCircle, Database, Info, LayoutGrid } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InputCategoryCard } from "@/components/inputs/InputCategoryCard";
 import { InputDialog } from "@/components/inputs/InputDialog";
 import { DataTypeToggle } from "@/components/inputs/DataTypeToggle";
+import { ViewToggle } from "@/components/inputs/ViewToggle";
+import { InputsTable } from "@/components/inputs/InputsTable";
 
 export type InputCategory = {
   id: string;
@@ -21,6 +23,8 @@ export default function InputsPage() {
   const [activeTab, setActiveTab] = useState<string>("all");
   const [showInputDialog, setShowInputDialog] = useState(false);
   const [dataTypeFilter, setDataTypeFilter] = useState<InputDataType | "all">("all");
+  const [view, setView] = useState<"card" | "table">("card");
+  const [viewMode, setViewMode] = useState<"component" | "expense">("component");
 
   const categories: InputCategory[] = [
     {
@@ -102,6 +106,12 @@ export default function InputsPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <ViewToggle 
+              view={view} 
+              viewMode={viewMode}
+              onViewChange={setView}
+              onViewModeChange={setViewMode}
+            />
             <DataTypeToggle 
               value={dataTypeFilter} 
               onChange={setDataTypeFilter} 
@@ -127,87 +137,140 @@ export default function InputsPage() {
             <TabsTrigger value="production">Production</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="all" className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {categories.map((category) => (
-                <InputCategoryCard 
-                  key={category.id} 
-                  category={category} 
+          {view === "card" ? (
+            <>
+              <TabsContent value="all" className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {categories.map((category) => (
+                    <InputCategoryCard 
+                      key={category.id} 
+                      category={category} 
+                      dataTypeFilter={dataTypeFilter}
+                    />
+                  ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="bess" className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {categories
+                    .filter(c => c.id === "bess")
+                    .map((category) => (
+                      <InputCategoryCard 
+                        key={category.id} 
+                        category={category} 
+                        dataTypeFilter={dataTypeFilter}
+                      />
+                    ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="hydrogen" className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {categories
+                    .filter(c => c.id === "hydrogen")
+                    .map((category) => (
+                      <InputCategoryCard 
+                        key={category.id} 
+                        category={category} 
+                        dataTypeFilter={dataTypeFilter}
+                      />
+                    ))}
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="financing" className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {categories
+                    .filter(c => ["project-financing", "system-financing"].includes(c.id))
+                    .map((category) => (
+                      <InputCategoryCard 
+                        key={category.id} 
+                        category={category} 
+                        dataTypeFilter={dataTypeFilter}
+                      />
+                    ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="tax" className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {categories
+                    .filter(c => ["tax", "tax-credits"].includes(c.id))
+                    .map((category) => (
+                      <InputCategoryCard 
+                        key={category.id} 
+                        category={category} 
+                        dataTypeFilter={dataTypeFilter}
+                      />
+                    ))}
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="production" className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {categories
+                    .filter(c => c.id === "production")
+                    .map((category) => (
+                      <InputCategoryCard 
+                        key={category.id} 
+                        category={category} 
+                        dataTypeFilter={dataTypeFilter}
+                      />
+                    ))}
+                </div>
+              </TabsContent>
+            </>
+          ) : (
+            <>
+              <TabsContent value="all" className="space-y-4">
+                <InputsTable
                   dataTypeFilter={dataTypeFilter}
+                  viewMode={viewMode}
                 />
-              ))}
-            </div>
-          </TabsContent>
+              </TabsContent>
 
-          <TabsContent value="bess" className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {categories
-                .filter(c => c.id === "bess")
-                .map((category) => (
-                  <InputCategoryCard 
-                    key={category.id} 
-                    category={category} 
-                    dataTypeFilter={dataTypeFilter}
-                  />
-                ))}
-            </div>
-          </TabsContent>
+              <TabsContent value="bess" className="space-y-4">
+                <InputsTable
+                  categoryFilter="bess"
+                  dataTypeFilter={dataTypeFilter}
+                  viewMode={viewMode}
+                />
+              </TabsContent>
 
-          <TabsContent value="hydrogen" className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {categories
-                .filter(c => c.id === "hydrogen")
-                .map((category) => (
-                  <InputCategoryCard 
-                    key={category.id} 
-                    category={category} 
-                    dataTypeFilter={dataTypeFilter}
-                  />
-                ))}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="financing" className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {categories
-                .filter(c => ["project-financing", "system-financing"].includes(c.id))
-                .map((category) => (
-                  <InputCategoryCard 
-                    key={category.id} 
-                    category={category} 
-                    dataTypeFilter={dataTypeFilter}
-                  />
-                ))}
-            </div>
-          </TabsContent>
+              <TabsContent value="hydrogen" className="space-y-4">
+                <InputsTable
+                  categoryFilter="hydrogen"
+                  dataTypeFilter={dataTypeFilter}
+                  viewMode={viewMode}
+                />
+              </TabsContent>
+              
+              <TabsContent value="financing" className="space-y-4">
+                <InputsTable
+                  categoryFilter="financing"
+                  dataTypeFilter={dataTypeFilter}
+                  viewMode={viewMode}
+                />
+              </TabsContent>
 
-          <TabsContent value="tax" className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {categories
-                .filter(c => ["tax", "tax-credits"].includes(c.id))
-                .map((category) => (
-                  <InputCategoryCard 
-                    key={category.id} 
-                    category={category} 
-                    dataTypeFilter={dataTypeFilter}
-                  />
-                ))}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="production" className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {categories
-                .filter(c => c.id === "production")
-                .map((category) => (
-                  <InputCategoryCard 
-                    key={category.id} 
-                    category={category} 
-                    dataTypeFilter={dataTypeFilter}
-                  />
-                ))}
-            </div>
-          </TabsContent>
+              <TabsContent value="tax" className="space-y-4">
+                <InputsTable
+                  categoryFilter="tax"
+                  dataTypeFilter={dataTypeFilter}
+                  viewMode={viewMode}
+                />
+              </TabsContent>
+              
+              <TabsContent value="production" className="space-y-4">
+                <InputsTable
+                  categoryFilter="production"
+                  dataTypeFilter={dataTypeFilter}
+                  viewMode={viewMode}
+                />
+              </TabsContent>
+            </>
+          )}
         </Tabs>
         
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800/30 dark:bg-amber-900/20 dark:text-amber-500">

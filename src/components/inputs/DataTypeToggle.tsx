@@ -7,11 +7,12 @@ import { InputDataType } from "@/pages/InputsPage";
 interface DataTypeToggleProps {
   value: InputDataType | "all";
   onChange: (value: InputDataType | "all") => void;
+  className?: string;
 }
 
-export function DataTypeToggle({ value, onChange }: DataTypeToggleProps) {
+export function DataTypeToggle({ value, onChange, className }: DataTypeToggleProps) {
   return (
-    <div className="flex rounded-md border">
+    <div className={cn("flex rounded-md border", className)}>
       <Button
         variant="ghost"
         size="sm"
