@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { DownloadCloud, Table as TableIcon, BarChart as ChartIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
@@ -8,6 +7,17 @@ import { Switch } from "@/components/ui/switch";
 import { OutputMetric } from "./OutputMetricSelector";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  ReferenceLine,
+  Cell,
+} from "recharts";
 
 export interface SensitivityResult {
   variableId: string;
@@ -44,19 +54,36 @@ export function SensitivityResults({
     return a.variableName.localeCompare(b.variableName);
   });
 
-  // Prepare data for tornado chart
+  // Transform results for tornado chart
   const chartData = sortedResults.map((result) => ({
     variableName: result.variableName,
-    impact: result.absoluteChange,
-    percentChange: result.percentChange,
-    baseValue: result.baseValue,
-    testValue: result.testValue,
-    unit: result.unit,
+    value: result.absoluteChange,
+    original: result,
   }));
 
   const handleExport = () => {
     // This would be implemented with a proper export library
     toast.success("Export functionality will be implemented");
+  };
+
+  const renderCustomTooltip = (props: any) => {
+    const { payload } = props;
+    if (!payload || payload.length === 0) return null;
+    
+    const data = payload[0].payload;
+    const original = data.original;
+    const isPositive = data.value >= 0;
+    
+    return (
+      <div className="bg-white p-3 border rounded-md shadow-md text-sm">
+        <p className="font-medium">{original.variableName}</p>
+        <p>Base value: {original.baseValue} {original.unit}</p>
+        <p>Test value: {original.testValue} {original.unit}</p>
+        <p className={isPositive ? "text-green-600" : "text-red-600"}>
+          {isPositive ? "+" : ""}{original.absoluteChange.toFixed(2)} ({isPositive ? "+" : ""}{original.percentChange.toFixed(2)}%)
+        </p>
+      </div>
+    );
   };
 
   if (isLoading) {
@@ -138,28 +165,31 @@ export function SensitivityResults({
       </CardHeader>
       <CardContent>
         {viewMode === "chart" ? (
-          <div className="h-96">
+          <div className="h-[500px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                layout="horizontal"
+                layout="vertical"
                 data={chartData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                margin={{ top: 20, right: 30, left: 120, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="variableName" />
-                <YAxis />
-                <Tooltip 
-                  formatter={(value, name, props) => {
-                    const dataPoint = props.payload;
-                    return [
-                      `${dataPoint.impact > 0 ? '+' : ''}${dataPoint.impact.toFixed(2)} (${dataPoint.percentChange > 0 ? '+' : ''}${dataPoint.percentChange.toFixed(2)}%)`,
-                      'Impact'
-                    ];
-                  }}
-                  labelFormatter={(label) => `Variable: ${label}`}
+                <XAxis type="number" />
+                <YAxis 
+                  dataKey="variableName" 
+                  type="category" 
+                  tick={{ fontSize: 12 }}
+                  width={110}
                 />
-                <ReferenceLine y={0} stroke="#000" />
-                <Bar dataKey="impact" fill="#8884d8" />
+                <Tooltip content={renderCustomTooltip} />
+                <ReferenceLine x={0} stroke="#000" />
+                <Bar dataKey="value">
+                  {chartData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={entry.value >= 0 ? "#4ade80" : "#f87171"} 
+                    />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>

@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Save, Trash, ChevronDown, Check } from "lucide-react";
+import { Save, Trash, ChevronDown, Check, CopyIcon, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -8,10 +8,22 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { OutputMetric } from "./OutputMetricSelector";
 import { VariableRange } from "./VariableRangeSelector";
 import { toast } from "sonner";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export interface SensitivityConfig {
   id: string;
@@ -27,11 +39,13 @@ interface SavedConfigurationsProps {
     variableRanges: VariableRange[];
   };
   onLoadConfig: (config: SensitivityConfig) => void;
+  onReset: () => void;
 }
 
 export function SavedConfigurations({
   currentConfig,
   onLoadConfig,
+  onReset,
 }: SavedConfigurationsProps) {
   const [configName, setConfigName] = useState("");
   const [savedConfigs, setSavedConfigs] = useState<SensitivityConfig[]>(() => {
@@ -44,6 +58,8 @@ export function SavedConfigurations({
       return [];
     }
   });
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+  const [configToDelete, setConfigToDelete] = useState<string | null>(null);
 
   const saveCurrentConfig = () => {
     if (!configName.trim()) {
@@ -82,6 +98,32 @@ export function SavedConfigurations({
     setSavedConfigs(updatedConfigs);
     localStorage.setItem("sensitivityConfigs", JSON.stringify(updatedConfigs));
     toast.success("Configuration deleted");
+    setIsDeleteAlertOpen(false);
+    setConfigToDelete(null);
+  };
+
+  const confirmDelete = (id: string) => {
+    setConfigToDelete(id);
+    setIsDeleteAlertOpen(true);
+  };
+
+  const duplicateConfig = (config: SensitivityConfig) => {
+    const newConfig: SensitivityConfig = {
+      ...config,
+      id: `config-${Date.now()}`,
+      name: `${config.name} (copy)`,
+      dateCreated: new Date(),
+    };
+
+    const updatedConfigs = [...savedConfigs, newConfig];
+    setSavedConfigs(updatedConfigs);
+    localStorage.setItem("sensitivityConfigs", JSON.stringify(updatedConfigs));
+    toast.success("Configuration duplicated");
+  };
+  
+  const handleReset = () => {
+    onReset();
+    toast.success("Analysis reset");
   };
 
   return (
@@ -102,6 +144,17 @@ export function SavedConfigurations({
         </div>
       </div>
 
+      <div className="flex gap-2">
+        <Button 
+          variant="outline" 
+          onClick={handleReset} 
+          className="flex-1"
+        >
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Reset Analysis
+        </Button>
+      </div>
+
       {savedConfigs.length > 0 && (
         <div className="flex flex-col gap-2">
           <label className="text-sm font-medium">Load Saved Configuration</label>
@@ -112,35 +165,73 @@ export function SavedConfigurations({
                 <ChevronDown className="h-4 w-4 ml-2" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-full">
+            <DropdownMenuContent className="w-[350px]">
               {savedConfigs.map((config) => (
-                <DropdownMenuItem
-                  key={config.id}
-                  className="flex items-center justify-between"
-                >
-                  <div className="flex flex-col gap-1 flex-1" onClick={() => onLoadConfig(config)}>
-                    <span>{config.name}</span>
-                    <span className="text-xs text-muted-foreground">
+                <div key={config.id}>
+                  <DropdownMenuItem
+                    className="flex flex-col items-start p-3 cursor-pointer"
+                    onClick={() => onLoadConfig(config)}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <div className="font-medium flex items-center">
+                        {config.name}
+                      </div>
+                      <div className="flex items-center">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            duplicateConfig(config);
+                          }}
+                          className="h-8 w-8 p-0 mr-1"
+                        >
+                          <CopyIcon className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            confirmDelete(config.id);
+                          }}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <span className="text-xs text-muted-foreground mt-1">
                       {config.outputMetric.name} ({config.variableRanges.length} variables)
                     </span>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteConfig(config.id);
-                    }}
-                    className="h-8 w-8 p-0"
-                  >
-                    <Trash className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuItem>
+                    <span className="text-xs text-muted-foreground">
+                      Created: {new Date(config.dateCreated).toLocaleDateString()}
+                    </span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </div>
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       )}
+
+      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Configuration</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this saved configuration? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => configToDelete && deleteConfig(configToDelete)}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
