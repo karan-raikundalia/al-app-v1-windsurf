@@ -2,7 +2,7 @@
 import { AnalysisVariable } from "../VariableControl";
 import { InputValue } from "@/hooks/use-inputs";
 
-// List of output metrics for the analysis
+// List of output metrics for the analysis - no longer needed here as we get from outputs hook
 export const metrics = [
   "NPV", 
   "IRR", 

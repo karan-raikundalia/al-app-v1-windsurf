@@ -6,9 +6,10 @@ import { SensitivityChart } from "./sensitivity/SensitivityChart";
 import { SensitivitySummary } from "./sensitivity/SensitivitySummary";
 import { useToast } from "@/components/ui/use-toast";
 import { useInputs } from "@/hooks/use-inputs";
+import { useOutputs } from "@/hooks/use-outputs";
 import { Button } from "@/components/ui/button";
 import { SaveIcon, RotateCcw } from "lucide-react";
-import { metrics, transformInputToAnalysisVariable, calculateLCOE, calculateLCOH } from "./sensitivity/SensitivityData";
+import { transformInputToAnalysisVariable, calculateLCOE, calculateLCOH } from "./sensitivity/SensitivityData";
 
 export function SensitivityAnalysis() {
   const [selectedVariables, setSelectedVariables] = useState<AnalysisVariable[]>([]);
@@ -24,6 +25,7 @@ export function SensitivityAnalysis() {
   }>>([]);
   
   const { inputs } = useInputs();
+  const { getAllOutputs } = useOutputs();
   const { toast } = useToast();
   
   // Calculate derived metrics
@@ -58,6 +60,9 @@ export function SensitivityAnalysis() {
     }
   ];
   
+  // Get the list of output metrics from the outputs hook
+  const outputMetrics = getAllOutputs().map(output => output.name);
+  
   // Transform inputs to analysis variables whenever inputs change
   const availableVariables = [
     ...inputs.map(input => transformInputToAnalysisVariable(input)),
@@ -71,26 +76,33 @@ export function SensitivityAnalysis() {
   const handleMetricChange = (metric: string) => {
     setCurrentMetric(metric);
     
-    // Update base value based on the selected metric
-    // In a real app, this would come from your financial model
-    const metricBaseValues: Record<string, number> = {
-      "NPV": 1000000,
-      "IRR": 12,
-      "DSCR": 1.5,
-      "LCOE": lcoeValue || 45,
-      "LCOH": lcohValue || 4.5,
-      "Payback": 5,
-      "Equity IRR": 15,
-      "MOIC": 2.5,
-      "Dividend Yield": 6,
-      "Cash-on-Cash Return": 12,
-      "LLCR": 1.8,
-      "PLCR": 2.0,
-      "Interest Coverage Ratio": 3.5,
-      "Gearing Ratio": 70
-    };
+    // Find the selected output to get its base value
+    const selectedOutput = getAllOutputs().find(output => output.name === metric);
     
-    setBaseValue(metricBaseValues[metric] || 0);
+    // Update base value based on the selected metric
+    if (selectedOutput) {
+      setBaseValue(selectedOutput.value);
+    } else {
+      // Fallback to default values if not found in outputs
+      const metricBaseValues: Record<string, number> = {
+        "NPV": 1000000,
+        "IRR": 12,
+        "DSCR": 1.5,
+        "LCOE": lcoeValue || 45,
+        "LCOH": lcohValue || 4.5,
+        "Payback": 5,
+        "Equity IRR": 15,
+        "MOIC": 2.5,
+        "Dividend Yield": 6,
+        "Cash-on-Cash Return": 12,
+        "LLCR": 1.8,
+        "PLCR": 2.0,
+        "Interest Coverage Ratio": 3.5,
+        "Gearing Ratio": 70
+      };
+      
+      setBaseValue(metricBaseValues[metric] || 0);
+    }
     
     // Simulate loading
     setIsLoading(true);
@@ -173,7 +185,7 @@ export function SensitivityAnalysis() {
           availableVariables={availableVariables}
           onVariableSelection={handleVariableSelection}
           selectedVariables={selectedVariables}
-          metrics={metrics}
+          metrics={outputMetrics}
           onMetricChange={handleMetricChange}
           currentMetric={currentMetric}
           baseValue={baseValue}

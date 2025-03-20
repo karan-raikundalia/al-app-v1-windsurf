@@ -14,40 +14,47 @@ import ProformaView from "./pages/ProformaView";
 import LCOECalculator from "./pages/LCOECalculator";
 import MultiMetricAnalysis from "./pages/MultiMetricAnalysis";
 import InputsPage from "./pages/InputsPage";
+import OutputsPage from "./pages/OutputsPage";
+import { OutputsProvider } from "./hooks/use-outputs";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/analysis/sensitivity" element={<Index />} />
-          <Route path="/analysis/monte-carlo" element={<MonteCarloAnalysis />} />
-          <Route path="/analysis/multi-metric" element={<MultiMetricAnalysis />} />
-          
-          {/* Risk Tracker Routes */}
-          <Route path="/risk-tracker" element={<Navigate to="/risk-tracker/assumption-validity" replace />} />
-          <Route path="/risk-tracker/assumption-validity" element={<RiskTracker defaultTab="assumption-validity" />} />
-          <Route path="/risk-tracker/validation" element={<RiskTracker defaultTab="validation" />} />
-          <Route path="/risk-tracker/risk-register" element={<RiskTracker defaultTab="risk-register" />} />
-          <Route path="/risk-tracker/documents" element={<RiskTracker defaultTab="documents" />} />
-          
-          {/* Proforma View */}
-          <Route path="/proforma" element={<ProformaView />} />
-          
-          {/* LCOE Calculator */}
-          <Route path="/lcoe-calculator" element={<LCOECalculator />} />
-          
-          {/* Inputs Page */}
-          <Route path="/inputs" element={<InputsPage />} />
-          
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <OutputsProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/analysis/sensitivity" element={<Index />} />
+            <Route path="/analysis/monte-carlo" element={<MonteCarloAnalysis />} />
+            <Route path="/analysis/multi-metric" element={<MultiMetricAnalysis />} />
+            
+            {/* Risk Tracker Routes */}
+            <Route path="/risk-tracker" element={<Navigate to="/risk-tracker/assumption-validity" replace />} />
+            <Route path="/risk-tracker/assumption-validity" element={<RiskTracker defaultTab="assumption-validity" />} />
+            <Route path="/risk-tracker/validation" element={<RiskTracker defaultTab="validation" />} />
+            <Route path="/risk-tracker/risk-register" element={<RiskTracker defaultTab="risk-register" />} />
+            <Route path="/risk-tracker/documents" element={<RiskTracker defaultTab="documents" />} />
+            
+            {/* Proforma View */}
+            <Route path="/proforma" element={<ProformaView />} />
+            
+            {/* LCOE Calculator */}
+            <Route path="/lcoe-calculator" element={<LCOECalculator />} />
+            
+            {/* Inputs Page */}
+            <Route path="/inputs" element={<InputsPage />} />
+            
+            {/* Outputs Page */}
+            <Route path="/outputs" element={<OutputsPage />} />
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </OutputsProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
