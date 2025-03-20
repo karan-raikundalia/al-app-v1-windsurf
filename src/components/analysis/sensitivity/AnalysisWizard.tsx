@@ -490,7 +490,10 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
                               </TooltipTrigger>
                               <TooltipContent>
                                 <p>Base value: {formatNumber(variable.baseValue)} {variable.unit}</p>
-                                <p className="text-xs text-muted-foreground">{variable.description || "No description available"}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {/* Fix - Don't use description property directly since it doesn't exist */}
+                                  {variable.name} - {variable.category || "Unknown category"}
+                                </p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
