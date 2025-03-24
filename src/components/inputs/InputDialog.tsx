@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { InputCategory } from "@/pages/InputsPage";
 import { useInputs } from "@/hooks/use-inputs";
+import { ExpenseType } from "./DataTypeToggle";
 
 interface InputDialogProps {
   open: boolean;
@@ -24,6 +26,7 @@ export function InputDialog({ open, onOpenChange, categories, defaultCategory }:
   const [unit, setUnit] = useState("");
   const [value, setValue] = useState("");
   const [categoryId, setCategoryId] = useState(defaultCategory || categories[0]?.id || "");
+  const [expenseType, setExpenseType] = useState<ExpenseType>("other");
   const [timeSeriesData, setTimeSeriesData] = useState<string>(""); // CSV format or JSON
   
   const handleSubmit = () => {
@@ -34,17 +37,18 @@ export function InputDialog({ open, onOpenChange, categories, defaultCategory }:
         categoryId,
         unit,
         dataType: "constant",
+        expenseType,
         value: isNaN(Number(value)) ? value : Number(value),
       });
     } else {
       // For time series, we would parse the data into the appropriate format
-      // This is a simplified version
       addInput({
         name,
         description,
         categoryId,
         unit,
         dataType: "timeSeries",
+        expenseType,
         timeSeriesValues: timeSeriesData.split(",").map(v => Number(v.trim())),
       });
     }
@@ -61,6 +65,7 @@ export function InputDialog({ open, onOpenChange, categories, defaultCategory }:
     setValue("");
     setTimeSeriesData("");
     setInputType("constant");
+    setExpenseType("other");
     setCategoryId(defaultCategory || categories[0]?.id || "");
   };
 
@@ -130,6 +135,21 @@ export function InputDialog({ open, onOpenChange, categories, defaultCategory }:
                   className="mt-1.5"
                 />
               </div>
+              
+              <div className="col-span-4">
+                <Label htmlFor="expenseType">Expense Type</Label>
+                <Select value={expenseType} onValueChange={(value) => setExpenseType(value as ExpenseType)}>
+                  <SelectTrigger id="expenseType" className="mt-1.5">
+                    <SelectValue placeholder="Select expense type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="capex">Capital Expenditure (CAPEX)</SelectItem>
+                    <SelectItem value="opex">Operating Expenditure (OPEX)</SelectItem>
+                    <SelectItem value="revenue">Revenue</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             
             <TabsContent value="constant" className="mt-0 space-y-4">
@@ -148,12 +168,12 @@ export function InputDialog({ open, onOpenChange, categories, defaultCategory }:
             <TabsContent value="timeSeries" className="mt-0 space-y-4">
               <div>
                 <Label htmlFor="timeSeriesData">Time Series Data</Label>
-                <textarea
+                <Textarea
                   id="timeSeriesData"
                   value={timeSeriesData}
                   onChange={(e) => setTimeSeriesData(e.target.value)}
                   placeholder="Enter comma-separated values or paste CSV data"
-                  className="mt-1.5 w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="mt-1.5 w-full min-h-[100px]"
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
                   Enter comma-separated values or paste CSV data.
