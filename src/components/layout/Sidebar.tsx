@@ -15,8 +15,7 @@ import {
   Upload,
   Activity,
   Calculator,
-  BarChartHorizontal,
-  PieChart
+  BarChartHorizontal
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -180,16 +179,6 @@ export function Sidebar() {
             >
               <MenuSquare className="h-4 w-4" />
               <span>Inputs</span>
-            </NavLink>
-          </li>
-
-          <li>
-            <NavLink 
-              to="/outputs" 
-              className={({ isActive }) => cn("nav-link", isActive && "active")}
-            >
-              <PieChart className="h-4 w-4" />
-              <span>Outputs</span>
             </NavLink>
           </li>
 
