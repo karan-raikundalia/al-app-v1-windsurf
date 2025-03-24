@@ -1,241 +1,552 @@
 
 import { useState, useEffect } from "react";
-import { Play, Save } from "lucide-react";
+import { VariableControl, type AnalysisVariable } from "./VariableControl";
 import { DataPanel } from "@/components/ui/DataPanel";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { OutputMetricSelector, OutputMetric } from "./sensitivity/OutputMetricSelector";
-import { VariableRangeSelector, VariableRange } from "./sensitivity/VariableRangeSelector";
-import { SavedConfigurations, SensitivityConfig } from "./sensitivity/SavedConfigurations";
-import { SensitivityResults, SensitivityResult } from "./sensitivity/SensitivityResults";
+import { SensitivityChart } from "./sensitivity/SensitivityChart";
+import { SensitivitySummary } from "./sensitivity/SensitivitySummary";
+import { SavedAnalyses } from "./sensitivity/SavedAnalyses";
+import { useToast } from "@/components/ui/use-toast";
 import { useInputs } from "@/hooks/use-inputs";
-import { calculateLCOE } from "@/utils/lcoeCalculator";
+import { useOutputs } from "@/hooks/use-outputs";
+import { Button } from "@/components/ui/button";
+import { SaveIcon, RotateCcw, PlusCircle, Copy, Download } from "lucide-react";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { AnalysisWizard } from "./sensitivity/AnalysisWizard";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { calculateVariableImpact, transformInputToAnalysisVariable, calculateLCOE, calculateLCOH } from "./sensitivity/SensitivityData";
+
+// Define saved analysis type
+export interface SavedAnalysis {
+  id: string;
+  name: string;
+  metric: string;
+  variables: AnalysisVariable[];
+  baseValue: number;
+  variableRanges: Record<string, { 
+    minPercentage: number; 
+    maxPercentage: number; 
+  }>;
+  createdAt: Date;
+}
+
+// Sample saved analyses for demonstration
+const sampleSavedAnalyses: SavedAnalysis[] = [
+  {
+    id: "analysis-1",
+    name: "NPV Sensitivity - Base Case",
+    metric: "NPV",
+    variables: [
+      {
+        id: "capex",
+        name: "Capital Expenditure",
+        baseValue: 1000000,
+        unit: "$",
+        category: "Financial"
+      },
+      {
+        id: "opex",
+        name: "Operating Expenses",
+        baseValue: 50000,
+        unit: "$/year",
+        category: "Operations"
+      },
+      {
+        id: "production",
+        name: "Annual Production",
+        baseValue: 10000,
+        unit: "MWh",
+        category: "Production"
+      }
+    ],
+    baseValue: 500000,
+    variableRanges: {
+      "capex": { minPercentage: 20, maxPercentage: 20 },
+      "opex": { minPercentage: 15, maxPercentage: 15 },
+      "production": { minPercentage: 10, maxPercentage: 10 }
+    },
+    createdAt: new Date(2023, 9, 15)
+  },
+  {
+    id: "analysis-2",
+    name: "IRR Sensitivity Analysis",
+    metric: "IRR",
+    variables: [
+      {
+        id: "discount-rate",
+        name: "Discount Rate",
+        baseValue: 8,
+        unit: "%",
+        category: "Financial"
+      },
+      {
+        id: "inflation",
+        name: "Inflation Rate",
+        baseValue: 2.5,
+        unit: "%",
+        category: "Macroeconomic"
+      }
+    ],
+    baseValue: 12.5,
+    variableRanges: {
+      "discount-rate": { minPercentage: 25, maxPercentage: 25 },
+      "inflation": { minPercentage: 40, maxPercentage: 40 }
+    },
+    createdAt: new Date(2023, 10, 22)
+  }
+];
 
 export function SensitivityAnalysis() {
-  const { inputs } = useInputs();
-  const [selectedMetric, setSelectedMetric] = useState<OutputMetric | null>(null);
-  const [variableRanges, setVariableRanges] = useState<VariableRange[]>([]);
-  const [results, setResults] = useState<SensitivityResult[]>([]);
+  const [selectedVariables, setSelectedVariables] = useState<AnalysisVariable[]>([]);
+  const [currentMetric, setCurrentMetric] = useState("NPV");
   const [isLoading, setIsLoading] = useState(false);
-  const [baseOutputValue, setBaseOutputValue] = useState(0);
-
-  // Generate more realistic results for the selected metric and variables
-  const runAnalysis = () => {
-    if (!selectedMetric) {
-      toast.error("Please select an output metric");
-      return;
-    }
-
-    if (variableRanges.length === 0) {
-      toast.error("Please select at least one variable to test");
-      return;
-    }
-
+  const [baseValue, setBaseValue] = useState(1000000); // Default base value for the analysis
+  const [savedAnalyses, setSavedAnalyses] = useState<SavedAnalysis[]>(sampleSavedAnalyses);
+  const [analysisName, setAnalysisName] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [variableRanges, setVariableRanges] = useState<Record<string, { minPercentage: number; maxPercentage: number }>>({});
+  const [impacts, setImpacts] = useState<Record<string, { positiveImpact: number; negativeImpact: number }>>({});
+  const [showAnalysisView, setShowAnalysisView] = useState(false);
+  
+  const { inputs } = useInputs();
+  const { getAllOutputs } = useOutputs();
+  const { toast } = useToast();
+  
+  // Get the list of output metrics from the outputs hook
+  const outputMetrics = getAllOutputs().map(output => output.name);
+  
+  // Calculate the impact of each variable on the selected metric
+  const calculateImpacts = () => {
     setIsLoading(true);
-
-    // Simulate base value calculation
-    // In a real implementation, this would use actual calculation logic
-    let mockBaseValue = 0;
-
-    if (selectedMetric.id === "lcoe") {
-      // Use the LCOE calculator for more realistic results
-      mockBaseValue = calculateLCOE({
-        name: "Test Project",
-        energySource: "solar",
-        initialInvestment: 1000000,
-        capacityKW: 1000,
-        projectLifeYears: 25,
-        discountRate: 0.08,
-        annualOMCost: 20000,
-        fuelCost: 0,
-        capacityFactor: 0.25,
-        annualDegradation: 0.005
-      }).totalLCOE;
-    } else {
-      // For other metrics, generate a plausible value based on the metric
-      switch (selectedMetric.id) {
-        case "npv":
-          mockBaseValue = 1250000;
-          break;
-        case "irr":
-          mockBaseValue = 12.5;
-          break;
-        case "payback":
-          mockBaseValue = 7.2;
-          break;
-        case "dscr":
-          mockBaseValue = 1.35;
-          break;
-        case "lcoh":
-          mockBaseValue = 4.2;
-          break;
-        default:
-          mockBaseValue = 100 + Math.random() * 500;
-      }
-    }
-
-    setBaseOutputValue(mockBaseValue);
-
-    // Simulate API call with a timeout
-    setTimeout(() => {
-      const mockResults: SensitivityResult[] = variableRanges.map(range => {
-        const variable = inputs.find(i => i.id === range.variableId);
-        if (!variable) {
-          return {
-            variableId: range.variableId,
-            variableName: "Unknown Variable",
-            baseValue: 0,
-            testValue: 0,
-            outputValue: 0,
-            percentChange: 0,
-            absoluteChange: 0,
-            unit: ""
-          };
-        }
-
-        // Use the modified base value if provided
-        const baseValue = range.modifiedBaseValue !== undefined ? 
-          range.modifiedBaseValue : 
-          (typeof variable.value === 'number' ? variable.value : 0);
-          
-        const testValue = range.maxValue; // Use the max value for testing
-        
-        // Generate a more realistic impact based on the variable and metric
-        let impactFactor = 0;
-        
-        // Different variables have different impacts on different metrics
-        if (variable.name.toLowerCase().includes("capex") || variable.name.toLowerCase().includes("investment")) {
-          impactFactor = selectedMetric.id === "npv" ? -0.6 : 
-            selectedMetric.id === "irr" ? -0.8 : 
-            selectedMetric.id === "payback" ? 0.7 : 
-            selectedMetric.id === "lcoe" ? 0.5 : 0.3;
-        } else if (variable.name.toLowerCase().includes("capacity") || variable.name.toLowerCase().includes("production")) {
-          impactFactor = selectedMetric.id === "npv" ? 0.7 : 
-            selectedMetric.id === "irr" ? 0.6 : 
-            selectedMetric.id === "payback" ? -0.5 : 
-            selectedMetric.id === "lcoe" ? -0.7 : 0.2;
-        } else if (variable.name.toLowerCase().includes("rate") || variable.name.toLowerCase().includes("discount")) {
-          impactFactor = selectedMetric.id === "npv" ? -0.9 : 
-            selectedMetric.id === "irr" ? -0.2 : 
-            selectedMetric.id === "payback" ? 0.3 : 
-            selectedMetric.id === "lcoe" ? 0.4 : 0.5;
-        } else {
-          // Add some variability for other variables
-          impactFactor = (Math.random() * 0.8 - 0.4) * (Math.random() > 0.5 ? 1 : -1);
-        }
-        
-        // Calculate the percentage change in the input variable
-        const inputPercentChange = ((testValue - baseValue) / baseValue);
-        
-        // Calculate the impact on the output metric based on the input change
-        const outputPercentChange = inputPercentChange * impactFactor;
-        const absoluteChange = mockBaseValue * outputPercentChange;
-        
-        return {
-          variableId: range.variableId,
-          variableName: variable.name,
-          baseValue: baseValue,
-          testValue: testValue,
-          outputValue: mockBaseValue + absoluteChange,
-          percentChange: outputPercentChange * 100,
-          absoluteChange: absoluteChange,
-          unit: variable.unit || ""
-        };
-      });
-
-      setResults(mockResults);
-      setIsLoading(false);
-      toast.success("Sensitivity analysis completed");
-    }, 1500);
-  };
-
-  const handleLoadConfig = (config: SensitivityConfig) => {
-    setSelectedMetric(config.outputMetric);
-    setVariableRanges(config.variableRanges);
-    toast.success(`Loaded configuration: ${config.name}`);
-  };
-
-  const handleReset = () => {
-    setSelectedMetric(null);
-    setVariableRanges([]);
-    setResults([]);
-    setBaseOutputValue(0);
-  };
-
-  // Derive selected variables from the ranges
-  const selectedVariables = variableRanges.map(range => {
-    const input = inputs.find(i => i.id === range.variableId);
-    if (!input) return null;
     
-    // Convert InputValue to AnalysisVariable
-    return {
-      id: input.id,
-      name: input.name,
-      baseValue: range.modifiedBaseValue !== undefined ? range.modifiedBaseValue : 
-                (typeof input.value === 'number' ? input.value : 0),
-      minValue: range.minValue,
-      maxValue: range.maxValue,
-      impact: 0, // Will be calculated during analysis
-      category: input.categoryId,
-      metric: "cost" // Default
+    const newImpacts: Record<string, { positiveImpact: number; negativeImpact: number }> = {};
+    
+    selectedVariables.forEach(variable => {
+      const ranges = variableRanges[variable.id] || { minPercentage: 20, maxPercentage: 20 };
+      
+      // Calculate positive impact (increasing the variable)
+      const positiveImpact = calculateVariableImpact(
+        variable,
+        currentMetric,
+        baseValue,
+        ranges.maxPercentage
+      );
+      
+      // Calculate negative impact (decreasing the variable)
+      const negativeImpact = -calculateVariableImpact(
+        variable,
+        currentMetric,
+        baseValue,
+        -ranges.minPercentage
+      );
+      
+      newImpacts[variable.id] = {
+        positiveImpact,
+        negativeImpact
+      };
+    });
+    
+    setImpacts(newImpacts);
+    
+    // Simulate some calculation time
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 600);
+  };
+
+  // Effect to recalculate impacts when variables, ranges, or metric changes
+  useEffect(() => {
+    if (selectedVariables.length > 0) {
+      calculateImpacts();
+    }
+  }, [selectedVariables, currentMetric, baseValue]);
+
+  // Handle selecting variables for analysis
+  const handleVariableSelection = (variables: AnalysisVariable[]) => {
+    setSelectedVariables(variables);
+  };
+
+  // Handle changing the output metric
+  const handleMetricChange = (metric: string) => {
+    setCurrentMetric(metric);
+    
+    // Find the selected output to get its base value
+    const selectedOutput = getAllOutputs().find(output => output.name === metric);
+    
+    // Update base value based on the selected metric
+    if (selectedOutput) {
+      setBaseValue(selectedOutput.value);
+    } else {
+      // Fallback to default values if not found in outputs
+      const metricBaseValues: Record<string, number> = {
+        "NPV": 1000000,
+        "IRR": 12,
+        "DSCR": 1.5,
+        "LCOE": calculateLCOE(inputs) || 45,
+        "LCOH": calculateLCOH(inputs) || 4.5,
+        "Payback": 5,
+        "Equity IRR": 15,
+        "MOIC": 2.5,
+        "Dividend Yield": 6,
+        "Cash-on-Cash Return": 12,
+        "LLCR": 1.8,
+        "PLCR": 2.0,
+        "Interest Coverage Ratio": 3.5,
+        "Gearing Ratio": 70
+      };
+      
+      setBaseValue(metricBaseValues[metric] || 0);
+    }
+  };
+  
+  // Handle changing the base value manually
+  const handleBaseValueChange = (newBaseValue: number) => {
+    setBaseValue(newBaseValue);
+  };
+  
+  // Handle updating variable ranges
+  const handleRangeChange = (variableId: string, minPercentage: number, maxPercentage: number) => {
+    setVariableRanges(prev => ({
+      ...prev,
+      [variableId]: { minPercentage, maxPercentage }
+    }));
+  };
+  
+  // Handle removing a variable
+  const handleRemoveVariable = (variableId: string) => {
+    setSelectedVariables(prev => prev.filter(v => v.id !== variableId));
+    
+    // Also remove from ranges
+    setVariableRanges(prev => {
+      const newRanges = { ...prev };
+      delete newRanges[variableId];
+      return newRanges;
+    });
+    
+    // And from impacts
+    setImpacts(prev => {
+      const newImpacts = { ...prev };
+      delete newImpacts[variableId];
+      return newImpacts;
+    });
+  };
+  
+  // Handle updating the chart after range changes
+  const handleUpdateChart = () => {
+    calculateImpacts();
+    
+    toast({
+      description: "Chart updated with new sensitivity ranges"
+    });
+  };
+  
+  // Handle saving the analysis
+  const handleSaveAnalysis = () => {
+    if (selectedVariables.length === 0) {
+      toast({
+        title: "No variables selected",
+        description: "Please select at least one variable to save this analysis.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!analysisName.trim()) {
+      toast({
+        title: "Name required",
+        description: "Please provide a name for your analysis.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const id = `analysis-${Date.now()}`;
+    const newSavedAnalysis: SavedAnalysis = {
+      id,
+      name: analysisName,
+      metric: currentMetric,
+      variables: selectedVariables,
+      baseValue,
+      variableRanges,
+      createdAt: new Date()
     };
-  }).filter(Boolean) as any[]; // Filter out nulls
+    
+    setSavedAnalyses(prev => [...prev, newSavedAnalysis]);
+    setDialogOpen(false);
+    
+    toast({
+      title: "Analysis saved",
+      description: `"${analysisName}" has been saved and can be accessed later.`
+    });
+  };
+  
+  // Handle duplicating the analysis
+  const handleDuplicateAnalysis = () => {
+    setAnalysisName(`${currentMetric} Analysis (Copy)`);
+    setDialogOpen(true);
+  };
+  
+  // Handle loading a saved analysis
+  const handleLoadAnalysis = (analysis: SavedAnalysis) => {
+    setCurrentMetric(analysis.metric);
+    setBaseValue(analysis.baseValue);
+    setSelectedVariables(analysis.variables);
+    setVariableRanges(analysis.variableRanges);
+    setShowAnalysisView(true);
+    
+    // Calculate impacts for the loaded analysis
+    setIsLoading(true);
+    setTimeout(() => {
+      calculateImpacts();
+    }, 100);
+    
+    toast({
+      description: `Loaded analysis: ${analysis.name}`
+    });
+  };
+  
+  // Handle deleting a saved analysis
+  const handleDeleteAnalysis = (analysisId: string) => {
+    setSavedAnalyses(prev => prev.filter(analysis => analysis.id !== analysisId));
+    
+    toast({
+      description: "Analysis deleted"
+    });
+  };
+  
+  // Handle resetting the analysis
+  const handleResetAnalysis = () => {
+    setSelectedVariables([]);
+    setVariableRanges({});
+    setImpacts({});
+    setShowAnalysisView(false);
+    toast({
+      description: "Analysis has been reset. You can now start a new analysis."
+    });
+  };
+  
+  // Handle creating a new analysis using the wizard
+  const handleNewAnalysis = () => {
+    setWizardOpen(true);
+  };
+
+  // Handle export as PNG
+  const handleExportPNG = () => {
+    // Placeholder for PNG export functionality
+    toast({
+      description: "Exporting as PNG... (Not implemented)"
+    });
+  };
+  
+  // Handle export as PDF
+  const handleExportPDF = () => {
+    // Placeholder for PDF export functionality
+    toast({
+      description: "Exporting as PDF... (Not implemented)"
+    });
+  };
+  
+  // Handle export as Excel
+  const handleExportExcel = () => {
+    // Placeholder for Excel export functionality
+    toast({
+      description: "Exporting as Excel... (Not implemented)"
+    });
+  };
+  
+  // Handle completing the wizard
+  const handleWizardComplete = (config: {
+    outputMetric: string;
+    baseValue: number;
+    selectedVariables: AnalysisVariable[];
+    variableRanges: Record<string, { minPercentage: number; maxPercentage: number }>;
+  }) => {
+    setCurrentMetric(config.outputMetric);
+    setBaseValue(config.baseValue);
+    setSelectedVariables(config.selectedVariables);
+    setVariableRanges(config.variableRanges);
+    setWizardOpen(false);
+    setShowAnalysisView(true);
+    
+    // Calculate impacts for the new configuration
+    setIsLoading(true);
+    setTimeout(() => {
+      calculateImpacts();
+    }, 100);
+    
+    toast({
+      description: "New sensitivity analysis created successfully"
+    });
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Sensitivity Analysis</h1>
-          <p className="text-muted-foreground">
-            Analyze how changes in input variables affect your project's financial outcomes
-          </p>
-        </div>
+        <h1 className="text-2xl font-semibold tracking-tight">Sensitivity Analysis</h1>
         <div className="flex gap-2">
-          <Button onClick={runAnalysis} disabled={!selectedMetric || variableRanges.length === 0}>
-            <Play className="h-4 w-4 mr-2" />
-            Run Analysis
+          <Button 
+            size="sm" 
+            onClick={handleNewAnalysis}
+            className="flex items-center gap-1"
+          >
+            <PlusCircle className="h-4 w-4" />
+            New Analysis
           </Button>
+          
+          {showAnalysisView && (
+            <>
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex items-center gap-1"
+                    disabled={selectedVariables.length === 0}
+                  >
+                    <SaveIcon className="h-4 w-4" />
+                    Save Analysis
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Save Analysis</DialogTitle>
+                    <DialogDescription>
+                      Enter a name for your sensitivity analysis to save it for later reference.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="analysis-name">Analysis Name</Label>
+                      <Input 
+                        id="analysis-name" 
+                        placeholder="e.g., Hydrogen Project IRR Sensitivity" 
+                        value={analysisName}
+                        onChange={(e) => setAnalysisName(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm font-normal text-muted-foreground">Output Metric</Label>
+                      <p className="text-sm">{currentMetric}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-sm font-normal text-muted-foreground">Variables</Label>
+                      <p className="text-sm">{selectedVariables.length} variables selected</p>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+                    <Button onClick={handleSaveAnalysis}>Save Analysis</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    disabled={selectedVariables.length === 0}
+                    className="flex items-center gap-1"
+                  >
+                    <Download className="h-4 w-4" />
+                    Export
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleExportPNG}>
+                    Export as PNG
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportPDF}>
+                    Export as PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportExcel}>
+                    Export as Excel
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleDuplicateAnalysis}
+                disabled={selectedVariables.length === 0}
+                className="flex items-center gap-1"
+              >
+                <Copy className="h-4 w-4" />
+                Duplicate
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleResetAnalysis}
+                disabled={selectedVariables.length === 0}
+                className="flex items-center gap-1"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Reset
+              </Button>
+            </>
+          )}
         </div>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 space-y-6">
-          <DataPanel>
-            <div className="space-y-6">
-              <OutputMetricSelector 
-                selectedMetric={selectedMetric}
-                onMetricChange={setSelectedMetric}
-              />
-              
-              <VariableRangeSelector
-                selectedVariables={selectedVariables}
-                ranges={variableRanges}
-                onRangeChange={setVariableRanges}
-              />
-            </div>
-          </DataPanel>
-          
-          <DataPanel>
-            <SavedConfigurations
-              currentConfig={{
-                outputMetric: selectedMetric,
-                variableRanges: variableRanges,
-              }}
-              onLoadConfig={handleLoadConfig}
-              onReset={handleReset}
-            />
-          </DataPanel>
-        </div>
-        
-        <div className="lg:col-span-2">
-          <SensitivityResults
-            outputMetric={selectedMetric}
-            results={results}
+      <p className="text-muted-foreground max-w-4xl">
+        Understand how different variables impact your project outcomes. Create a new analysis to 
+        select an output metric, choose input variables to analyze, and visualize their impact 
+        with an interactive tornado chart.
+      </p>
+      
+      {showAnalysisView ? (
+        <>
+          <SensitivityChart 
+            selectedVariables={selectedVariables}
+            currentMetric={currentMetric}
             isLoading={isLoading}
-            baseOutputValue={baseOutputValue}
+            baseValue={baseValue}
+            variableRanges={variableRanges}
+            onRangeChange={handleRangeChange}
+            onRemoveVariable={handleRemoveVariable}
+            onUpdateChart={handleUpdateChart}
+            impacts={impacts}
           />
-        </div>
-      </div>
+          
+          <SensitivitySummary 
+            selectedVariables={selectedVariables}
+            currentMetric={currentMetric}
+            baseValue={baseValue}
+          />
+        </>
+      ) : (
+        <SavedAnalyses 
+          analyses={savedAnalyses}
+          onLoadAnalysis={handleLoadAnalysis}
+          onDeleteAnalysis={handleDeleteAnalysis}
+          onNewAnalysis={handleNewAnalysis}
+        />
+      )}
+      
+      {/* Analysis Wizard Modal */}
+      <AnalysisWizard 
+        isOpen={wizardOpen}
+        onClose={() => setWizardOpen(false)}
+        onComplete={handleWizardComplete}
+      />
     </div>
   );
 }
