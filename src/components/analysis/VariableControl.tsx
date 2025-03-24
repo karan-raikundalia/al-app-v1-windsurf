@@ -1,23 +1,14 @@
 
-import { useState, useEffect } from "react";
-import { Check, ChevronDown, Search, Plus, Minus, X } from "lucide-react";
+import { useState } from "react";
+import { Check, ChevronDown, Search, SlidersHorizontal, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
-  DropdownMenuItem,
-  DropdownMenuCheckboxItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
+  DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { formatNumber } from "@/lib/utils";
 
 export interface AnalysisVariable {
   id: string;
@@ -27,306 +18,172 @@ export interface AnalysisVariable {
   maxValue: number;
   impact: number;
   category: string;
-  unit?: string;
-  metric?: "cost" | "schedule" | "performance" | "revenue" | "other";
+  metric: "cost" | "schedule" | "performance";
 }
 
 interface VariableControlProps {
-  availableVariables: AnalysisVariable[];
-  onVariableSelection: (variables: AnalysisVariable[]) => void;
-  selectedVariables: AnalysisVariable[];
+  variables: AnalysisVariable[];
+  onFilterChange: (variables: AnalysisVariable[]) => void;
   metrics: string[];
   onMetricChange: (metric: string) => void;
   currentMetric: string;
-  baseValue: number;
-  onBaseValueChange: (value: number) => void;
-  showBaseValueInput?: boolean; // New optional prop with default value
 }
 
 export function VariableControl({
-  availableVariables,
-  onVariableSelection,
-  selectedVariables,
+  variables,
+  onFilterChange,
   metrics,
   onMetricChange,
   currentMetric,
-  baseValue,
-  onBaseValueChange,
-  showBaseValueInput = true // Default to true for backward compatibility
 }: VariableControlProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredVariables, setFilteredVariables] = useState<AnalysisVariable[]>(availableVariables);
-  const [variableRanges, setVariableRanges] = useState<Record<string, { percentage: number }>>({});
-  
-  // Update filtered variables when search query changes or availableVariables changes
-  useEffect(() => {
-    const filtered = availableVariables.filter(
-      variable => variable.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    setFilteredVariables(filtered);
-  }, [searchQuery, availableVariables]);
-  
-  // Initialize variable ranges for newly selected variables
-  useEffect(() => {
-    const newRanges = { ...variableRanges };
-    let updated = false;
-    
-    selectedVariables.forEach(variable => {
-      if (!newRanges[variable.id]) {
-        newRanges[variable.id] = { percentage: 20 }; // Default to ±20%
-        updated = true;
-        
-        // Also update the impact value based on the default range
-        variable.impact = variable.baseValue * 0.2; // Set initial impact
-      }
-    });
-    
-    if (updated) {
-      setVariableRanges(newRanges);
-    }
-  }, [selectedVariables]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const categories = [...new Set(variables.map((v) => v.category))];
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+    const query = e.target.value.toLowerCase();
+    setSearchQuery(query);
+    
+    const filtered = variables.filter(
+      (variable) =>
+        variable.name.toLowerCase().includes(query) &&
+        (selectedCategories.length === 0 || 
+         selectedCategories.includes(variable.category))
+    );
+    
+    onFilterChange(filtered);
   };
 
-  const handleVariableSelect = (variable: AnalysisVariable) => {
-    const isAlreadySelected = selectedVariables.some(v => v.id === variable.id);
+  const handleCategoryToggle = (category: string) => {
+    let newCategories: string[];
     
-    if (isAlreadySelected) {
-      // Remove the variable
-      const updated = selectedVariables.filter(v => v.id !== variable.id);
-      onVariableSelection(updated);
+    if (selectedCategories.includes(category)) {
+      newCategories = selectedCategories.filter((c) => c !== category);
     } else {
-      // Add the variable with initial impact calculation
-      const variableWithImpact = {
-        ...variable,
-        impact: variable.baseValue * 0.2 // Default 20% impact
-      };
-      onVariableSelection([...selectedVariables, variableWithImpact]);
+      newCategories = [...selectedCategories, category];
     }
-  };
-  
-  const handleRemoveVariable = (variableId: string) => {
-    const updated = selectedVariables.filter(v => v.id !== variableId);
-    onVariableSelection(updated);
-  };
-  
-  const handleRangeChange = (variableId: string, newPercentage: number) => {
-    // Update the range in our local state
-    setVariableRanges(prev => ({
-      ...prev,
-      [variableId]: { percentage: newPercentage }
-    }));
     
-    // Update the impact value for this variable
-    const updatedVariables = selectedVariables.map(variable => {
-      if (variable.id === variableId) {
-        // Calculate impact based on percentage of base value
-        return {
-          ...variable,
-          impact: variable.baseValue * (newPercentage / 100)
-        };
-      }
-      return variable;
-    });
+    setSelectedCategories(newCategories);
     
-    onVariableSelection(updatedVariables);
-  };
-  
-  const handleBaseValueAdjust = (adjustment: number) => {
-    const newValue = baseValue + adjustment;
-    if (newValue > 0) {
-      onBaseValueChange(newValue);
-    }
-  };
-  
-  const handleBaseValueInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseFloat(e.target.value);
-    if (!isNaN(value) && value > 0) {
-      onBaseValueChange(value);
-    }
+    const filtered = variables.filter(
+      (variable) =>
+        variable.name.toLowerCase().includes(searchQuery) &&
+        (newCategories.length === 0 || newCategories.includes(variable.category))
+    );
+    
+    onFilterChange(filtered);
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap gap-4">
-        <div className="flex-1 min-w-[250px]">
-          <Label htmlFor="metric">Output Metric</Label>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full justify-between mt-2">
-                {currentMetric}
-                <ChevronDown className="h-4 w-4 opacity-70" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56">
-              <DropdownMenuLabel>Select Metric</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {metrics.map((metric) => (
-                <DropdownMenuCheckboxItem
-                  key={metric}
-                  checked={currentMetric === metric}
-                  onCheckedChange={() => onMetricChange(metric)}
-                >
-                  {metric}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-        
-        {showBaseValueInput && (
-          <div className="flex-1 min-w-[250px]">
-            <Label htmlFor="baseValue">Base Value</Label>
-            <div className="flex items-center gap-2 mt-2">
-              <Button 
-                variant="outline" 
-                size="icon"
-                onClick={() => handleBaseValueAdjust(-Math.max(1, baseValue * 0.01))}
-              >
-                <Minus className="h-4 w-4" />
-              </Button>
-              <Input
-                id="baseValue"
-                type="number"
-                value={baseValue}
-                onChange={handleBaseValueInput}
-                className="text-center"
-              />
-              <Button 
-                variant="outline" 
-                size="icon"
-                onClick={() => handleBaseValueAdjust(Math.max(1, baseValue * 0.01))}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
-      
-      <Separator />
-      
-      <div>
-        <Label htmlFor="variables">Input Variables</Label>
-        <div className="relative mt-2">
+    <div className="flex flex-col space-y-4">
+      <div className="flex flex-wrap gap-3">
+        <div className="relative flex-1">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            id="variables"
             placeholder="Search variables..."
             value={searchQuery}
             onChange={handleSearch}
-            className="pl-9"
+            className="pl-9 h-10"
           />
           {searchQuery && (
-            <Button 
-              variant="ghost" 
-              size="icon"
-              className="absolute right-2 top-2"
-              onClick={() => setSearchQuery("")}
+            <button
+              onClick={() => {
+                setSearchQuery("");
+                onFilterChange(
+                  variables.filter(
+                    (v) => selectedCategories.length === 0 || 
+                    selectedCategories.includes(v.category)
+                  )
+                );
+              }}
+              className="absolute right-2.5 top-2.5 h-5 w-5 rounded-full bg-muted flex items-center justify-center hover:bg-muted-foreground/20"
             >
-              <X className="h-4 w-4" />
-            </Button>
+              <X className="h-3 w-3" />
+            </button>
           )}
         </div>
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="w-full mt-2">
-              Select Variables
-              <ChevronDown className="h-4 w-4 ml-2 opacity-70" />
+            <Button variant="outline" className="h-10 gap-1.5">
+              <SlidersHorizontal className="h-4 w-4" />
+              Filter Categories
+              <ChevronDown className="h-3.5 w-3.5 ml-1 opacity-70" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-[300px]">
-            <DropdownMenuLabel>Available Variables</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <ScrollArea className="h-[300px]">
-              {filteredVariables.length > 0 ? (
-                filteredVariables.map((variable) => (
-                  <DropdownMenuItem
-                    key={variable.id}
-                    onSelect={(e) => {
-                      e.preventDefault();
-                      handleVariableSelect(variable);
-                    }}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <span>{variable.name}</span>
-                      {selectedVariables.some(v => v.id === variable.id) && (
-                        <Check className="h-4 w-4" />
-                      )}
-                    </div>
-                  </DropdownMenuItem>
-                ))
-              ) : (
-                <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-                  No variables found
-                </div>
-              )}
-            </ScrollArea>
+          <DropdownMenuContent align="end" className="w-56">
+            {categories.map((category) => (
+              <DropdownMenuItem
+                key={category}
+                className="flex items-center justify-between cursor-pointer"
+                onSelect={(e) => {
+                  e.preventDefault();
+                  handleCategoryToggle(category);
+                }}
+              >
+                {category}
+                {selectedCategories.includes(category) && (
+                  <Check className="h-4 w-4" />
+                )}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="h-10">
+              Metric: {currentMetric}
+              <ChevronDown className="h-3.5 w-3.5 ml-1.5 opacity-70" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {metrics.map((metric) => (
+              <DropdownMenuItem
+                key={metric}
+                className="flex items-center justify-between cursor-pointer"
+                onSelect={(e) => {
+                  e.preventDefault();
+                  onMetricChange(metric);
+                }}
+              >
+                {metric}
+                {currentMetric === metric && <Check className="h-4 w-4" />}
+              </DropdownMenuItem>
+            ))}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
       
-      {selectedVariables.length > 0 && (
-        <div className="space-y-4 mt-4">
-          <h3 className="text-sm font-medium">Selected Variables and Ranges</h3>
-          
-          <div className="space-y-6">
-            {selectedVariables.map((variable) => {
-              const range = variableRanges[variable.id]?.percentage || 20;
-              
-              return (
-                <div key={variable.id} className="space-y-2 bg-muted/30 rounded-lg p-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{variable.name}</span>
-                        <Badge variant="outline">{variable.category}</Badge>
-                      </div>
-                      <div className="text-sm text-muted-foreground mt-1">
-                        Base: {formatNumber(variable.baseValue)}
-                        {variable.unit && ` ${variable.unit}`}
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemoveVariable(variable.id)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>-{range}%</span>
-                      <span>Range: ±{range}%</span>
-                      <span>+{range}%</span>
-                    </div>
-                    <Slider
-                      value={[range]}
-                      min={5}
-                      max={50}
-                      step={5}
-                      onValueChange={(values) => handleRangeChange(variable.id, values[0])}
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                      <span>
-                        {formatNumber(variable.baseValue * (1 - range / 100))}
-                        {variable.unit && ` ${variable.unit}`}
-                      </span>
-                      <span>
-                        {formatNumber(variable.baseValue * (1 + range / 100))}
-                        {variable.unit && ` ${variable.unit}`}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+      {selectedCategories.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {selectedCategories.map((category) => (
+            <div
+              key={category}
+              className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs text-primary"
+            >
+              {category}
+              <button
+                onClick={() => handleCategoryToggle(category)}
+                className="rounded-full p-0.5 hover:bg-primary/20"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          ))}
+          <button
+            onClick={() => {
+              setSelectedCategories([]);
+              onFilterChange(
+                variables.filter((v) =>
+                  v.name.toLowerCase().includes(searchQuery)
+                )
               );
-            })}
-          </div>
+            }}
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            Clear all
+          </button>
         </div>
       )}
     </div>

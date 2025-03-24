@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   BarChart,
@@ -19,14 +18,11 @@ export interface TornadoChartProps {
     positiveDelta: number;
     negativeDelta: number;
     baseline: number;
-    category?: string;
     unit?: string;
-    variableId?: string;
   }[];
   baseValue: number;
   sortBy?: "impact" | "alphabetical";
-  onVariableClick?: (variableId: string) => void;
-  chartHeight?: number | string;
+  onVariableClick?: (variable: string) => void;
 }
 
 // Custom tooltip component for the tornado chart
@@ -39,37 +35,19 @@ const CustomTooltip = ({
     const data = payload[0].payload;
     const isPositive = payload[0].dataKey === "positiveDelta";
     const value = isPositive ? data.positiveDelta : data.negativeDelta;
-    const absValue = Math.abs(value);
-    
-    let percentageDisplay = "";
-    if (typeof value === "number") {
-      // If the value is already in percentage format
-      if (data.unit === "%") {
-        percentageDisplay = `${absValue.toFixed(1)}%`;
-      } else {
-        // Otherwise calculate the percentage from baseline
-        const percentage = ((absValue / data.baseline) * 100).toFixed(1);
-        percentageDisplay = `(${percentage}%)`;
-      }
-    }
+    const percentage = ((Math.abs(value) / data.baseline) * 100).toFixed(1);
 
     return (
-      <div className="bg-background border border-border rounded-lg p-3 text-sm shadow-lg">
+      <div className="glassmorphism rounded-lg p-3 text-sm">
         <p className="font-medium">{data.variable}</p>
-        <p className={`${isPositive ? "text-emerald-500" : "text-red-500"} font-medium`}>
+        <p className={`text-${isPositive ? "blue" : "red"}-500 font-medium`}>
           {isPositive ? "+" : "-"}
-          {formatNumber(absValue)}
-          {data.unit && data.unit !== "%" ? ` ${data.unit} ` : " "}
-          {percentageDisplay}
+          {formatNumber(Math.abs(value))}
+          {data.unit && ` ${data.unit}`} ({percentage}%)
         </p>
-        {data.category && (
-          <p className="text-xs text-muted-foreground mt-1">
-            Category: {data.category}
-          </p>
-        )}
-        <p className="text-xs text-muted-foreground mt-0.5">
+        <p className="text-xs text-muted-foreground mt-1">
           Baseline: {formatNumber(data.baseline)}
-          {data.unit && data.unit !== "%" ? ` ${data.unit}` : ""}
+          {data.unit && ` ${data.unit}`}
         </p>
       </div>
     );
@@ -82,7 +60,6 @@ export function TornadoChart({
   baseValue,
   sortBy = "impact",
   onVariableClick,
-  chartHeight = "100%",
 }: TornadoChartProps) {
   // Sort data based on the sortBy prop
   const sortedData = [...data].sort((a, b) => {
@@ -102,49 +79,54 @@ export function TornadoChart({
   });
 
   // Handle clicking on a bar
-  const handleClick = (data: any) => {
-    if (onVariableClick && data && data.variableId) {
-      onVariableClick(data.variableId);
+  const handleClick = (data: any, index: number, event: React.MouseEvent) => {
+    if (onVariableClick && data && data.variable) {
+      onVariableClick(data.variable);
     }
   };
 
   return (
-    <div className="w-full" style={{ height: chartHeight }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          layout="vertical"
-          data={sortedData}
-          margin={{ top: 20, right: 30, bottom: 20, left: 120 }}
-          barSize={20}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis
-            type="number"
-            tickFormatter={formatNumber}
-          />
-          <YAxis
-            dataKey="variable"
-            type="category"
-            width={120}
-            tickLine={false}
-            axisLine={false}
-          />
-          <Tooltip content={<CustomTooltip />} />
-          <ReferenceLine x={baseValue} stroke="#888" />
-          <Bar
-            dataKey="positiveDelta"
-            fill="#4ade80"
-            onClick={handleClick}
-            className="cursor-pointer"
-          />
-          <Bar
-            dataKey="negativeDelta"
-            fill="#f43f5e"
-            onClick={handleClick}
-            className="cursor-pointer"
-          />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
+    <ResponsiveContainer width="100%" height={60 * data.length}>
+      <BarChart
+        layout="vertical"
+        data={data}
+        margin={{ top: 20, right: 20, bottom: 20, left: 120 }}
+        onClick={(state: any) => {
+          if (state && state.activePayload && state.activePayload[0]) {
+            const payload = state.activePayload[0].payload;
+            if (payload && payload.variable && onVariableClick) {
+              onVariableClick(payload.variable);
+            }
+          }
+        }}
+      >
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis
+          type="number"
+          domain={["auto", "auto"]}
+          tickFormatter={formatNumber}
+        />
+        <YAxis
+          dataKey="variable"
+          type="category"
+          scale="band"
+          width={110}
+          tickLine={false}
+          axisLine={false}
+        />
+        <Tooltip content={<CustomTooltip />} />
+        <ReferenceLine x={baseValue} stroke="#888" />
+        <Bar
+          dataKey="positiveDelta"
+          className="tornado-bar tornado-bar-positive"
+          onClick={handleClick}
+        />
+        <Bar
+          dataKey="negativeDelta"
+          className="tornado-bar tornado-bar-negative"
+          onClick={handleClick}
+        />
+      </BarChart>
+    </ResponsiveContainer>
   );
 }
