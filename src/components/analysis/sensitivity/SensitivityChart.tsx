@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { TornadoChart } from "../TornadoChart";
 import { AnalysisVariable } from "../VariableControl";
@@ -41,52 +42,30 @@ export function SensitivityChart({
   const [displayMode, setDisplayMode] = useState<"absolute" | "percentage">("absolute");
   const [selectedVariable, setSelectedVariable] = useState<string | null>(null);
   
-  const generatePlaceholderData = () => {
-    return selectedVariables.map((variable, index) => {
-      const baseImpact = (baseValue * (0.15 - (index * 0.02)));
-      
-      return {
-        variable: variable.name,
-        positiveDelta: baseImpact,
-        negativeDelta: -baseImpact * 0.8,
-        baseline: baseValue,
-        category: variable.category,
-        unit: variable.unit,
-        variableId: variable.id
-      };
-    });
-  };
-  
-  const transformedData = (() => {
-    if (Object.keys(impacts).length > 0) {
-      return selectedVariables.map(variable => {
-        const variableImpact = impacts[variable.id] || { positiveImpact: 0, negativeImpact: 0 };
-        
-        const positiveDelta = displayMode === "absolute" 
-          ? variableImpact.positiveImpact 
-          : (variableImpact.positiveImpact / baseValue) * 100;
-          
-        const negativeDelta = displayMode === "absolute" 
-          ? variableImpact.negativeImpact 
-          : (variableImpact.negativeImpact / baseValue) * 100;
-        
-        return {
-          variable: variable.name,
-          positiveDelta: positiveDelta,
-          negativeDelta: negativeDelta,
-          baseline: baseValue,
-          category: variable.category,
-          unit: displayMode === "percentage" ? "%" : variable.unit,
-          variableId: variable.id
-        };
-      });
-    } 
-    else if (selectedVariables.length > 0) {
-      return generatePlaceholderData();
-    }
+  // Transform the variables data for the TornadoChart component
+  const transformedData = selectedVariables.map(variable => {
+    // Get the calculated impacts for this variable
+    const variableImpact = impacts[variable.id] || { positiveImpact: 0, negativeImpact: 0 };
     
-    return [];
-  })();
+    // For absolute values or percentage
+    const positiveDelta = displayMode === "absolute" 
+      ? variableImpact.positiveImpact 
+      : (variableImpact.positiveImpact / baseValue) * 100;
+      
+    const negativeDelta = displayMode === "absolute" 
+      ? variableImpact.negativeImpact 
+      : (variableImpact.negativeImpact / baseValue) * 100;
+    
+    return {
+      variable: variable.name,
+      positiveDelta: positiveDelta,
+      negativeDelta: negativeDelta,
+      baseline: baseValue,
+      category: variable.category,
+      unit: displayMode === "percentage" ? "%" : variable.unit,
+      variableId: variable.id
+    };
+  });
 
   const handleVariableClick = (variableId: string) => {
     setSelectedVariable(variableId);
@@ -174,20 +153,13 @@ export function SensitivityChart({
             </div>
           </div>
           
-          {transformedData.length > 0 ? (
-            <TornadoChart 
-              data={transformedData}
-              baseValue={0}
-              sortBy={sortBy}
-              onVariableClick={handleVariableClick}
-              chartHeight={Math.max(300, 60 * selectedVariables.length)}
-            />
-          ) : (
-            <div className="flex flex-col items-center justify-center h-80">
-              <BarChartIcon className="h-10 w-10 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">No data available for chart</p>
-            </div>
-          )}
+          <TornadoChart 
+            data={transformedData}
+            baseValue={0}
+            sortBy={sortBy}
+            onVariableClick={handleVariableClick}
+            chartHeight={Math.max(300, 60 * selectedVariables.length)}
+          />
           
           <div className="text-xs text-center text-muted-foreground">
             {displayMode === "absolute" ? (

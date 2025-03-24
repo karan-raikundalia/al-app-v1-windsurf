@@ -31,12 +31,10 @@ interface SavedAnalysesProps {
     variables: AnalysisVariable[];
     baseValue: number;
     variableRanges: Record<string, { minPercentage: number; maxPercentage: number }>;
-    createdAt: Date;
   }>;
   onDeleteAnalysis: (id: string) => void;
-  onLoadAnalysis: (analysis: any) => void;
   onDuplicateAnalysis: (analysis: any) => void;
-  onNewAnalysis?: () => void;
+  onLoadAnalysis: (analysis: any) => void;
 }
 
 export function SavedAnalyses({

@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Search, Info, ChevronRight, ChevronLeft, AlertCircle, Edit } from "lucide-react";
+import { Search, Info, ChevronRight, ChevronLeft, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -23,7 +24,7 @@ import { useOutputs } from "@/hooks/use-outputs";
 import { useInputs } from "@/hooks/use-inputs";
 import { transformInputToAnalysisVariable } from "./SensitivityData";
 import { calculateLCOE, calculateLCOH } from "./SensitivityData";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { formatNumber } from "@/lib/utils";
 
 interface AnalysisWizardProps {
@@ -50,17 +51,19 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     rangeType: "percentage" | "absolute";
   }>>({});
   const [baseValue, setBaseValue] = useState<number>(0);
-  const [editingVariable, setEditingVariable] = useState<string | null>(null);
   
   const { getAllOutputs } = useOutputs();
-  const { inputs, updateInput } = useInputs();
+  const { inputs } = useInputs();
   const { toast } = useToast();
   
+  // Available outputs from the outputs hook
   const outputs = getAllOutputs();
   
+  // Calculate derived metrics
   const lcoeValue = calculateLCOE(inputs);
   const lcohValue = calculateLCOH(inputs);
   
+  // Add derived metrics to available variables
   const derivedMetricInputs = [
     {
       id: "derived-lcoe",
@@ -88,11 +91,13 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     }
   ];
   
+  // Transform inputs to analysis variables
   const availableVariables = [
     ...inputs.map(input => transformInputToAnalysisVariable(input)),
     ...derivedMetricInputs.map(input => transformInputToAnalysisVariable(input))
   ];
   
+  // Filter variables by search term
   const filteredOutputs = outputs.filter(output => 
     output.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -102,6 +107,7 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     !selectedVariables.some(selected => selected.id === variable.id)
   );
   
+  // Group variables by category
   const groupedVariables: Record<string, AnalysisVariable[]> = {};
   
   filteredVariables.forEach(variable => {
@@ -112,11 +118,14 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     groupedVariables[category].push(variable);
   });
   
+  // Handle output selection
   const handleOutputSelect = (value: string) => {
     setSelectedOutput(value);
     
+    // Find the selected output to get its base value
     const output = outputs.find(o => o.name === value);
     
+    // Update base value based on the selected metric
     if (output) {
       setBaseValue(output.value);
     } else {
@@ -141,53 +150,11 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     }
   };
   
-  const handleBaseValueChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseFloat(event.target.value);
-    if (!isNaN(value)) {
-      setBaseValue(value);
-    }
-  };
-  
-  const handleVariableBaseValueChange = (variableId: string, newValue: number) => {
-    setSelectedVariables(prev => 
-      prev.map(variable => 
-        variable.id === variableId 
-          ? { ...variable, baseValue: newValue } 
-          : variable
-      )
-    );
-    
-    if (!variableId.startsWith("derived-")) {
-      const inputToUpdate = inputs.find(input => input.id === variableId);
-      if (inputToUpdate) {
-        updateInput(variableId, { value: newValue });
-        
-        toast({
-          description: `Updated base value for ${inputToUpdate.name} to ${newValue} ${inputToUpdate.unit || ''}`,
-        });
-      }
-    }
-    
-    setVariableRanges(prev => {
-      const currentRange = prev[variableId];
-      if (!currentRange) return prev;
-      
-      const updatedRange = { ...currentRange };
-      
-      if (updatedRange.rangeType === "percentage") {
-        updatedRange.minValue = newValue * (1 - updatedRange.minPercentage / 100);
-        updatedRange.maxValue = newValue * (1 + updatedRange.maxPercentage / 100);
-      }
-      
-      return { ...prev, [variableId]: updatedRange };
-    });
-    
-    setEditingVariable(null);
-  };
-  
+  // Handle variable selection
   const handleVariableSelect = (variable: AnalysisVariable) => {
     setSelectedVariables(prev => [...prev, variable]);
     
+    // Initialize range with default values (±20%)
     setVariableRanges(prev => ({
       ...prev,
       [variable.id]: {
@@ -200,9 +167,11 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     }));
   };
   
+  // Handle variable removal
   const handleVariableRemove = (variableId: string) => {
     setSelectedVariables(prev => prev.filter(v => v.id !== variableId));
     
+    // Also remove from ranges
     setVariableRanges(prev => {
       const newRanges = { ...prev };
       delete newRanges[variableId];
@@ -210,6 +179,7 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     });
   };
   
+  // Handle percentage change
   const handlePercentageChange = (variableId: string, type: "min" | "max", value: number) => {
     setVariableRanges(prev => {
       const variable = selectedVariables.find(v => v.id === variableId);
@@ -239,6 +209,7 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     });
   };
   
+  // Handle absolute value change
   const handleValueChange = (variableId: string, type: "min" | "max", value: number) => {
     setVariableRanges(prev => {
       const variable = selectedVariables.find(v => v.id === variableId);
@@ -270,6 +241,7 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     });
   };
   
+  // Handle range type toggle
   const handleRangeTypeChange = (variableId: string, type: "percentage" | "absolute") => {
     setVariableRanges(prev => {
       const currentRange = prev[variableId];
@@ -285,6 +257,7 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     });
   };
   
+  // Apply common percentage to all variables
   const applyCommonPercentage = (percentage: number) => {
     const newRanges = { ...variableRanges };
     
@@ -305,10 +278,12 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     });
   };
   
+  // Handle next step
   const handleNextStep = () => {
     if (step < 3) {
       setStep(step + 1);
     } else {
+      // Complete the wizard
       const config = {
         outputMetric: selectedOutput,
         baseValue,
@@ -326,12 +301,14 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     }
   };
   
+  // Handle previous step
   const handlePrevStep = () => {
     if (step > 1) {
       setStep(step - 1);
     }
   };
   
+  // Reset the wizard state when it opens
   useEffect(() => {
     if (isOpen) {
       setStep(1);
@@ -339,10 +316,10 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
       setSelectedOutput("");
       setSelectedVariables([]);
       setVariableRanges({});
-      setEditingVariable(null);
     }
   }, [isOpen]);
   
+  // Determine if the next button should be enabled
   const isNextEnabled = () => {
     switch (step) {
       case 1:
@@ -356,6 +333,7 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
     }
   };
   
+  // Render the wizard step content
   const renderStepContent = () => {
     switch (step) {
       case 1:
@@ -421,23 +399,12 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
             </ScrollArea>
             
             {selectedOutput && (
-              <div className="bg-muted/50 p-3 rounded-md space-y-3">
+              <div className="bg-muted/50 p-3 rounded-md">
                 <h4 className="text-sm font-medium">Selected Metric</h4>
                 <p className="text-sm">{selectedOutput}</p>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="base-value">Base value</Label>
-                  <Input
-                    id="base-value"
-                    type="number"
-                    value={baseValue}
-                    onChange={handleBaseValueChange}
-                    className="max-w-[200px]"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    This value will be used as the center point for the sensitivity analysis.
-                  </p>
-                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Base value: {formatNumber(baseValue)}
+                </p>
               </div>
             )}
           </div>
@@ -523,9 +490,7 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
                               </TooltipTrigger>
                               <TooltipContent>
                                 <p>Base value: {formatNumber(variable.baseValue)} {variable.unit}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {variable.name} - {variable.category || "Unknown category"}
-                                </p>
+                                <p className="text-xs text-muted-foreground">{variable.description || "No description available"}</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
@@ -614,8 +579,6 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
                     rangeType: "percentage"
                   };
                   
-                  const isEditing = editingVariable === variable.id;
-                  
                   return (
                     <div key={variable.id} className="space-y-3 pb-4 border-b">
                       <div className="flex items-center justify-between">
@@ -635,53 +598,8 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
                         </Tabs>
                       </div>
                       
-                      <div className="bg-muted/30 p-2 rounded-md text-sm flex justify-between items-center">
-                        {isEditing ? (
-                          <div className="flex items-center gap-2">
-                            <Label htmlFor={`base-value-${variable.id}`} className="sr-only">
-                              Base value
-                            </Label>
-                            <Input
-                              id={`base-value-${variable.id}`}
-                              type="number"
-                              value={variable.baseValue}
-                              onChange={(e) => {
-                                const newValue = parseFloat(e.target.value);
-                                if (!isNaN(newValue)) {
-                                  handleVariableBaseValueChange(variable.id, newValue);
-                                }
-                              }}
-                              className="w-24 h-7 text-sm"
-                              autoFocus
-                              onBlur={() => setEditingVariable(null)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  const newValue = parseFloat((e.target as HTMLInputElement).value);
-                                  if (!isNaN(newValue)) {
-                                    handleVariableBaseValueChange(variable.id, newValue);
-                                  }
-                                } else if (e.key === 'Escape') {
-                                  setEditingVariable(null);
-                                }
-                              }}
-                            />
-                            <span>{variable.unit}</span>
-                          </div>
-                        ) : (
-                          <div>
-                            Base Value: {formatNumber(variable.baseValue)} {variable.unit}
-                          </div>
-                        )}
-                        
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-7 px-2 hover:bg-muted"
-                          onClick={() => setEditingVariable(isEditing ? null : variable.id)}
-                        >
-                          <Edit className="h-3.5 w-3.5 mr-1" />
-                          {isEditing ? "Done" : "Edit"}
-                        </Button>
+                      <div className="bg-muted/30 p-2 rounded-md text-sm">
+                        Base Value: {formatNumber(variable.baseValue)} {variable.unit}
                       </div>
                       
                       <div className="space-y-4">
@@ -788,31 +706,66 @@ export function AnalysisWizard({ isOpen, onClose, onComplete }: AnalysisWizardPr
         </DialogHeader>
         
         <div className="py-2">
+          {/* Progress indicator */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-1.5">
+              {[1, 2, 3].map((stepNum) => (
+                <div 
+                  key={stepNum}
+                  className={`flex items-center justify-center h-8 w-8 rounded-full border text-sm
+                    ${step === stepNum ? 
+                      'bg-primary text-primary-foreground border-primary' : 
+                      step > stepNum ? 
+                        'bg-primary/20 text-primary border-primary/30' : 
+                        'bg-muted text-muted-foreground border-muted-foreground/20'
+                    }`}
+                >
+                  {stepNum}
+                </div>
+              ))}
+            </div>
+            <span className="text-sm text-muted-foreground">
+              Step {step} of 3
+            </span>
+          </div>
+          
           {renderStepContent()}
-        </div>
-        
-        <div className="flex items-center justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
           
-          {step > 1 && (
-            <Button variant="outline" onClick={handlePrevStep}>
-              <ChevronLeft className="w-4 h-4 mr-1" />
-              Back
+          {/* Navigation buttons */}
+          <div className="flex justify-between mt-6 pt-4 border-t">
+            <Button
+              variant="outline"
+              onClick={onClose}
+            >
+              Cancel
             </Button>
-          )}
-          
-          <Button onClick={handleNextStep} disabled={!isNextEnabled()}>
-            {step === 3 ? (
-              "Generate Chart"
-            ) : (
-              <>
-                Next
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </>
-            )}
-          </Button>
+            <div className="flex gap-2">
+              {step > 1 && (
+                <Button
+                  variant="outline"
+                  onClick={handlePrevStep}
+                  className="flex items-center gap-1"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Back
+                </Button>
+              )}
+              <Button
+                onClick={handleNextStep}
+                disabled={!isNextEnabled()}
+                className="flex items-center gap-1"
+              >
+                {step < 3 ? (
+                  <>
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </>
+                ) : (
+                  'Generate Chart'
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
