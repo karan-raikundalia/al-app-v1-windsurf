@@ -8,7 +8,11 @@ import { useToast } from "@/components/ui/use-toast";
 import { useInputs } from "@/hooks/use-inputs";
 import { Button } from "@/components/ui/button";
 import { SaveIcon, RotateCcw } from "lucide-react";
-import { metrics, transformInputToAnalysisVariable } from "./sensitivity/SensitivityData";
+import { 
+  metrics, 
+  transformInputToAnalysisVariable, 
+  baselineValues 
+} from "./sensitivity/SensitivityData";
 
 export function SensitivityAnalysis() {
   const [selectedVariables, setSelectedVariables] = useState<AnalysisVariable[]>([]);
@@ -31,6 +35,11 @@ export function SensitivityAnalysis() {
     transformInputToAnalysisVariable(input)
   );
 
+  useEffect(() => {
+    // Update base value when metric changes
+    setBaseValue(baselineValues[currentMetric] || 1000000);
+  }, [currentMetric]);
+
   const handleVariableSelection = (variables: AnalysisVariable[]) => {
     setSelectedVariables(variables);
   };
@@ -39,19 +48,7 @@ export function SensitivityAnalysis() {
     setCurrentMetric(metric);
     
     // Update base value based on the selected metric
-    // In a real app, this would come from your financial model
-    const metricBaseValues: Record<string, number> = {
-      "NPV": 1000000,
-      "IRR": 12,
-      "DSCR": 1.5,
-      "LCOE": 45,
-      "Payback": 5,
-      "LCOH": 4.5,
-      "Equity IRR": 15,
-      "MOIC": 2.5
-    };
-    
-    setBaseValue(metricBaseValues[metric] || 0);
+    setBaseValue(baselineValues[metric] || 1000000);
     
     // Simulate loading
     setIsLoading(true);

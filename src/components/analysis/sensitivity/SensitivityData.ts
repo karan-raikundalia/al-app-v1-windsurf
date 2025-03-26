@@ -14,6 +14,30 @@ export const metrics = [
   "MOIC"
 ];
 
+// Baseline values for different metrics (for demo purposes)
+export const baselineValues: Record<string, number> = {
+  "NPV": 1000000,
+  "IRR": 12,
+  "DSCR": 1.5,
+  "LCOE": 45,
+  "LCOH": 4.5,
+  "Payback": 5,
+  "Equity IRR": 15,
+  "MOIC": 2.5
+};
+
+// Units for each metric
+export const metricUnits: Record<string, string> = {
+  "NPV": "$",
+  "IRR": "%",
+  "DSCR": "ratio",
+  "LCOE": "$/MWh",
+  "LCOH": "$/kg",
+  "Payback": "years",
+  "Equity IRR": "%",
+  "MOIC": "x"
+};
+
 // Transform InputValue to AnalysisVariable
 export function transformInputToAnalysisVariable(input: InputValue): AnalysisVariable {
   // For time series, use the average or first value as base value
@@ -54,8 +78,7 @@ export function transformInputToAnalysisVariable(input: InputValue): AnalysisVar
   };
 }
 
-// This function would calculate the actual impact in a real application
-// Here we're just using placeholder logic
+// Calculate the actual impact of a variable on a metric
 export function calculateVariableImpact(
   variable: AnalysisVariable,
   targetMetric: string,
@@ -81,5 +104,58 @@ export function calculateVariableImpact(
   }
   
   // Calculate impact based on the variable's base value, percentage change, and sensitivity factor
-  return variable.baseValue * (percentageChange / 100) * sensitivityFactor;
+  return baselineValue * (percentageChange / 100) * sensitivityFactor;
+}
+
+// Generate detailed analysis results for a variable
+export function generateVariableAnalysisData(
+  variable: AnalysisVariable,
+  metric: string
+): {
+  variable: string;
+  positive: number;
+  negative: number;
+  positivePercentage: number;
+  negativePercentage: number;
+  baselineValue: number;
+} {
+  const baselineValue = baselineValues[metric] || 1000;
+  
+  // Calculate positive and negative impacts
+  const positiveChange = calculateVariableImpact(variable, metric, baselineValue, 20);
+  const negativeChange = calculateVariableImpact(variable, metric, baselineValue, -20);
+  
+  // Calculate percentage changes
+  const positivePercentage = (positiveChange / baselineValue) * 100;
+  const negativePercentage = (negativeChange / baselineValue) * 100;
+  
+  return {
+    variable: variable.name,
+    positive: positiveChange,
+    negative: negativeChange,
+    positivePercentage,
+    negativePercentage,
+    baselineValue
+  };
+}
+
+// Format the value based on the metric type
+export function formatMetricValue(value: number, metric: string): string {
+  const unit = metricUnits[metric] || "";
+  
+  if (metric === "NPV") {
+    return `${unit}${(value / 1000000).toFixed(2)}M`;
+  } else if (metric === "IRR" || metric === "Equity IRR") {
+    return `${value.toFixed(2)}${unit}`;
+  } else if (metric === "LCOE") {
+    return `${unit}${value.toFixed(2)}/MWh`;
+  } else if (metric === "LCOH") {
+    return `${unit}${value.toFixed(2)}/kg`;
+  } else if (metric === "Payback") {
+    return `${value.toFixed(1)} ${unit}`;
+  } else if (metric === "MOIC") {
+    return `${value.toFixed(2)}${unit}`;
+  } else {
+    return `${value.toFixed(2)}${unit}`;
+  }
 }
