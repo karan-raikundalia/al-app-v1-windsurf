@@ -2,7 +2,7 @@
 import { AnalysisVariable } from "../VariableControl";
 import { InputValue } from "@/hooks/use-inputs";
 
-// List of output metrics for the analysis
+// List of output metrics for the analysis - no longer needed here as we get from outputs hook
 export const metrics = [
   "NPV", 
   "IRR", 
@@ -11,32 +11,14 @@ export const metrics = [
   "LCOH", 
   "Payback", 
   "Equity IRR", 
-  "MOIC"
+  "MOIC",
+  "Dividend Yield",
+  "Cash-on-Cash Return",
+  "LLCR",
+  "PLCR",
+  "Interest Coverage Ratio",
+  "Gearing Ratio"
 ];
-
-// Baseline values for different metrics (for demo purposes)
-export const baselineValues: Record<string, number> = {
-  "NPV": 1000000,
-  "IRR": 12,
-  "DSCR": 1.5,
-  "LCOE": 45,
-  "LCOH": 4.5,
-  "Payback": 5,
-  "Equity IRR": 15,
-  "MOIC": 2.5
-};
-
-// Units for each metric
-export const metricUnits: Record<string, string> = {
-  "NPV": "$",
-  "IRR": "%",
-  "DSCR": "ratio",
-  "LCOE": "$/MWh",
-  "LCOH": "$/kg",
-  "Payback": "years",
-  "Equity IRR": "%",
-  "MOIC": "x"
-};
 
 // Transform InputValue to AnalysisVariable
 export function transformInputToAnalysisVariable(input: InputValue): AnalysisVariable {
@@ -78,7 +60,8 @@ export function transformInputToAnalysisVariable(input: InputValue): AnalysisVar
   };
 }
 
-// Calculate the actual impact of a variable on a metric
+// This function would calculate the actual impact in a real application
+// Here we're just using placeholder logic
 export function calculateVariableImpact(
   variable: AnalysisVariable,
   targetMetric: string,
@@ -99,63 +82,70 @@ export function calculateVariableImpact(
     case "DSCR":
       sensitivityFactor = variable.metric === "revenue" ? 0.7 : 0.4;
       break;
+    case "LCOE":
+      sensitivityFactor = variable.category === "solar" || variable.category === "wind" ? 1.8 : 0.9;
+      break;
+    case "LCOH":
+      sensitivityFactor = variable.category === "hydrogen" ? 2.0 : 0.7;
+      break;
+    case "Equity IRR":
+      sensitivityFactor = variable.metric === "revenue" ? 1.7 : 0.9;
+      break;
+    case "Dividend Yield":
+      sensitivityFactor = variable.metric === "revenue" ? 1.4 : 0.6;
+      break;
+    case "MOIC":
+      sensitivityFactor = variable.metric === "cost" ? 1.3 : 0.8;
+      break;
     default:
       sensitivityFactor = 1.0;
   }
   
   // Calculate impact based on the variable's base value, percentage change, and sensitivity factor
-  return baselineValue * (percentageChange / 100) * sensitivityFactor;
-}
-
-// Generate detailed analysis results for a variable
-export function generateVariableAnalysisData(
-  variable: AnalysisVariable,
-  metric: string
-): {
-  variable: string;
-  positive: number;
-  negative: number;
-  positivePercentage: number;
-  negativePercentage: number;
-  baselineValue: number;
-} {
-  const baselineValue = baselineValues[metric] || 1000;
+  const impact = variable.baseValue * (percentageChange / 100) * sensitivityFactor;
   
-  // Calculate positive and negative impacts
-  const positiveChange = calculateVariableImpact(variable, metric, baselineValue, 20);
-  const negativeChange = calculateVariableImpact(variable, metric, baselineValue, -20);
-  
-  // Calculate percentage changes
-  const positivePercentage = (positiveChange / baselineValue) * 100;
-  const negativePercentage = (negativeChange / baselineValue) * 100;
-  
-  return {
-    variable: variable.name,
-    positive: positiveChange,
-    negative: negativeChange,
-    positivePercentage,
-    negativePercentage,
-    baselineValue
-  };
-}
-
-// Format the value based on the metric type
-export function formatMetricValue(value: number, metric: string): string {
-  const unit = metricUnits[metric] || "";
-  
-  if (metric === "NPV") {
-    return `${unit}${(value / 1000000).toFixed(2)}M`;
-  } else if (metric === "IRR" || metric === "Equity IRR") {
-    return `${value.toFixed(2)}${unit}`;
-  } else if (metric === "LCOE") {
-    return `${unit}${value.toFixed(2)}/MWh`;
-  } else if (metric === "LCOH") {
-    return `${unit}${value.toFixed(2)}/kg`;
-  } else if (metric === "Payback") {
-    return `${value.toFixed(1)} ${unit}`;
-  } else if (metric === "MOIC") {
-    return `${value.toFixed(2)}${unit}`;
-  } else {
-    return `${value.toFixed(2)}${unit}`;
+  // For certain metrics like IRR and yield rates, the impact should be proportionally smaller
+  const proportionalMetrics = ["IRR", "Equity IRR", "Dividend Yield", "DSCR", "LLCR", "PLCR"];
+  if (proportionalMetrics.includes(targetMetric)) {
+    return impact * 0.1; // Scale down for percentage-based metrics
   }
+  
+  return impact;
+}
+
+// Simulated LCOE calculation based on inputs
+export function calculateLCOE(inputs: InputValue[]): number {
+  // Basic LCOE calculation for renewable energy projects
+  
+  // Find key inputs
+  const totalCapex = inputs.find(i => i.name === "Solar CAPEX" || i.name === "Wind CAPEX")?.value as number || 1100;
+  const capacityFactor = inputs.find(i => i.name.includes("Capacity Factor"))?.value as number || 0.25;
+  const opexCost = inputs.find(i => i.name.includes("O&M"))?.value as number || 20;
+  const discountRate = inputs.find(i => i.name.includes("WACC"))?.value as number || 0.08;
+  const projectLife = inputs.find(i => i.name.includes("Project Life"))?.value as number || 25;
+  
+  // Simple LCOE formula: (Total CAPEX + NPV of OPEX) / (Annual Energy Production × Project Life × Discount Factor)
+  const annualProduction = 8760 * capacityFactor; // hours × capacity factor
+  const opexNPV = opexCost * ((1 - Math.pow(1 + discountRate, -projectLife)) / discountRate);
+  
+  const lcoe = (totalCapex + opexNPV) / (annualProduction * projectLife);
+  return lcoe;
+}
+
+// Simulated LCOH calculation based on inputs
+export function calculateLCOH(inputs: InputValue[]): number {
+  // Find key hydrogen-related inputs
+  const electrolyzerCapex = inputs.find(i => i.name === "Electrolyzer Capacity")?.value as number || 800;
+  const electrolyzerEfficiency = inputs.find(i => i.name === "Electrolyzer Efficiency")?.value as number || 55;
+  const electricityPrice = inputs.find(i => i.name === "Hydrogen Selling Price")?.value as number || 50;
+  const utilizationRate = 0.7; // Default 70% utilization
+  const opexPct = 0.03; // Default 3% of CAPEX for annual OPEX
+  
+  // Simple LCOH calculation
+  const electricityCost = (electrolyzerEfficiency * electricityPrice) / 1000; // Convert to $ per kg
+  const capitalRecoveryFactor = 0.1; // Simplified factor
+  const capexPerKg = (electrolyzerCapex * capitalRecoveryFactor) / (365 * 24 * utilizationRate);
+  const opexPerKg = capexPerKg * opexPct;
+  
+  return electricityCost + capexPerKg + opexPerKg;
 }
