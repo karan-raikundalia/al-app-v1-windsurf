@@ -412,9 +412,15 @@ export function VariableControl({
                   <div className="space-y-5 pt-2">
                     <div className="space-y-1">
                       <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>Min</span>
+                        <span className="flex items-center">
+                          Min
+                          <span className="inline-block h-3 w-3 rounded-full border-2 border-amber-500 ml-1" />
+                        </span>
                         <span>Base</span>
-                        <span>Max</span>
+                        <span className="flex items-center">
+                          <span className="inline-block h-3 w-3 rounded-full border-2 border-green-500 mr-1" />
+                          Max
+                        </span>
                       </div>
                       
                       <Slider
