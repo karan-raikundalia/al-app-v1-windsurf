@@ -10,6 +10,8 @@ import { useOutputs } from "@/hooks/use-outputs";
 import { Button } from "@/components/ui/button";
 import { SaveIcon, RotateCcw } from "lucide-react";
 import { transformInputToAnalysisVariable, calculateLCOE, calculateLCOH } from "./sensitivity/SensitivityData";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 export function SensitivityAnalysis() {
   const [selectedVariables, setSelectedVariables] = useState<AnalysisVariable[]>([]);
@@ -180,33 +182,65 @@ export function SensitivityAnalysis() {
         choose input variables to analyze, and visualize their impact with an interactive tornado chart.
       </p>
       
-      <DataPanel>
-        <VariableControl
-          availableVariables={availableVariables}
-          onVariableSelection={handleVariableSelection}
-          selectedVariables={selectedVariables}
-          metrics={outputMetrics}
-          onMetricChange={handleMetricChange}
-          currentMetric={currentMetric}
-          baseValue={baseValue}
-          onBaseValueChange={handleBaseValueChange}
-          showBaseValueInput={true} // Set to true to show base value input
-        />
-      </DataPanel>
-      
-      {/* Fix the build error by properly passing props to SensitivityChart component */}
-      <SensitivityChart 
-        selectedVariables={selectedVariables}
-        currentMetric={currentMetric}
-        isLoading={isLoading}
-        baseValue={baseValue}
-      />
-      
-      <SensitivitySummary 
-        selectedVariables={selectedVariables}
-        currentMetric={currentMetric}
-        baseValue={baseValue}
-      />
+      <div className="grid grid-cols-10 gap-6">
+        {/* Left panel - 40% width (4 cols out of 10) */}
+        <div className="col-span-4 space-y-6">
+          <DataPanel>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Variable Selection</h3>
+              <VariableControl
+                availableVariables={availableVariables}
+                onVariableSelection={handleVariableSelection}
+                selectedVariables={selectedVariables}
+                metrics={outputMetrics}
+                onMetricChange={() => {}} // Empty function since metric change is handled in right panel
+                currentMetric={currentMetric}
+                baseValue={baseValue}
+                onBaseValueChange={handleBaseValueChange}
+                showBaseValueInput={false} // Hide base value input
+                hideMetricSelector={true} // Hide metric selector in left panel
+              />
+            </div>
+          </DataPanel>
+        </div>
+
+        {/* Right panel - 60% width (6 cols out of 10) */}
+        <div className="col-span-6 space-y-6">
+          <DataPanel>
+            <div className="flex flex-col space-y-4">
+              <h3 className="text-lg font-semibold">Output Metric</h3>
+              <div className="w-full max-w-xs">
+                <Label htmlFor="metric-selector">Metric to Analyze</Label>
+                <Select value={currentMetric} onValueChange={handleMetricChange}>
+                  <SelectTrigger id="metric-selector" className="w-full">
+                    <SelectValue placeholder="Select metric" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {outputMetrics.map(metric => (
+                      <SelectItem key={metric} value={metric}>
+                        {metric}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </DataPanel>
+        
+          <SensitivityChart 
+            selectedVariables={selectedVariables}
+            currentMetric={currentMetric}
+            isLoading={isLoading}
+            baseValue={baseValue}
+          />
+          
+          <SensitivitySummary 
+            selectedVariables={selectedVariables}
+            currentMetric={currentMetric}
+            baseValue={baseValue}
+          />
+        </div>
+      </div>
     </div>
   );
 }

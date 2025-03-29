@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Check, ChevronDown, Search, Plus, Minus, X, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -45,9 +44,9 @@ interface VariableControlProps {
   baseValue: number;
   onBaseValueChange: (value: number) => void;
   showBaseValueInput?: boolean;
+  hideMetricSelector?: boolean;
 }
 
-// Function to categorize variables into groups
 const categorizeVariables = (variables: AnalysisVariable[]) => {
   const categories: Record<string, AnalysisVariable[]> = {
     "Technical": [],
@@ -56,7 +55,6 @@ const categorizeVariables = (variables: AnalysisVariable[]) => {
     "Other": []
   };
   
-  // Categorize variables based on their category property
   variables.forEach(variable => {
     const category = mapCategoryToGroup(variable.category);
     categories[category].push(variable);
@@ -65,7 +63,6 @@ const categorizeVariables = (variables: AnalysisVariable[]) => {
   return categories;
 };
 
-// Map variable categories to higher-level groups
 const mapCategoryToGroup = (category: string): string => {
   const technicalCategories = ["solar", "wind", "battery", "bess", "hydrogen", "production"];
   const financialCategories = ["project-financing", "system-financing", "tax-credits", "tax"];
@@ -86,13 +83,13 @@ export function VariableControl({
   currentMetric,
   baseValue,
   onBaseValueChange,
-  showBaseValueInput = true
+  showBaseValueInput = true,
+  hideMetricSelector = false
 }: VariableControlProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredVariables, setFilteredVariables] = useState<AnalysisVariable[]>(availableVariables);
   const [variableRanges, setVariableRanges] = useState<Record<string, { minPercentage: number; maxPercentage: number }>>({}); 
   
-  // Update filtered variables when search query changes or availableVariables changes
   useEffect(() => {
     const filtered = availableVariables.filter(
       variable => variable.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -100,24 +97,21 @@ export function VariableControl({
     setFilteredVariables(filtered);
   }, [searchQuery, availableVariables]);
   
-  // Initialize variable ranges for newly selected variables
   useEffect(() => {
     const newRanges = { ...variableRanges };
     let updated = false;
     
     selectedVariables.forEach(variable => {
       if (!newRanges[variable.id]) {
-        // Default to ±20% range (symmetrical)
         newRanges[variable.id] = { 
           minPercentage: -20,
           maxPercentage: 20
         };
         updated = true;
         
-        // Also update the impact value based on the default range
         variable.minValue = variable.baseValue * 0.8;
         variable.maxValue = variable.baseValue * 1.2;
-        variable.impact = variable.baseValue * 0.2; // Set initial impact
+        variable.impact = variable.baseValue * 0.2;
       }
     });
     
@@ -134,16 +128,14 @@ export function VariableControl({
     const isAlreadySelected = selectedVariables.some(v => v.id === variable.id);
     
     if (isAlreadySelected) {
-      // Remove the variable
       const updated = selectedVariables.filter(v => v.id !== variable.id);
       onVariableSelection(updated);
     } else {
-      // Add the variable with initial min/max/impact calculation
       const variableWithRange = {
         ...variable,
-        minValue: variable.baseValue * 0.8, // Default -20%
-        maxValue: variable.baseValue * 1.2, // Default +20%
-        impact: variable.baseValue * 0.2 // Default 20% impact
+        minValue: variable.baseValue * 0.8,
+        maxValue: variable.baseValue * 1.2,
+        impact: variable.baseValue * 0.2
       };
       onVariableSelection([...selectedVariables, variableWithRange]);
     }
@@ -162,7 +154,6 @@ export function VariableControl({
     const minPercentage = ((minMax[0] - baseVal) / baseVal) * 100;
     const maxPercentage = ((minMax[1] - baseVal) / baseVal) * 100;
     
-    // Update the range in our local state
     setVariableRanges(prev => ({
       ...prev,
       [variableId]: { 
@@ -171,14 +162,12 @@ export function VariableControl({
       }
     }));
     
-    // Update the impact value and min/max values for this variable
     const updatedVariables = selectedVariables.map(variable => {
       if (variable.id === variableId) {
         return {
           ...variable,
           minValue: minMax[0],
           maxValue: minMax[1],
-          // Use the larger percentage change for impact
           impact: Math.max(
             Math.abs(minMax[0] - baseVal),
             Math.abs(minMax[1] - baseVal)
@@ -205,7 +194,6 @@ export function VariableControl({
     }
   };
 
-  // Update the min/max values when the user directly enters them
   const handleMinMaxInput = (variableId: string, isMin: boolean, value: string) => {
     const numValue = parseFloat(value);
     if (isNaN(numValue)) return;
@@ -216,11 +204,9 @@ export function VariableControl({
     const updatedVariables = selectedVariables.map(v => {
       if (v.id === variableId) {
         if (isMin) {
-          // Ensure min doesn't exceed max
           const minValue = Math.min(numValue, v.maxValue);
           return { ...v, minValue };
         } else {
-          // Ensure max doesn't fall below min
           const maxValue = Math.max(numValue, v.minValue);
           return { ...v, maxValue };
         }
@@ -228,7 +214,6 @@ export function VariableControl({
       return v;
     });
     
-    // Update the range percentages in state
     const updatedVar = updatedVariables.find(v => v.id === variableId);
     if (updatedVar) {
       const minPercentage = ((updatedVar.minValue - updatedVar.baseValue) / updatedVar.baseValue) * 100;
@@ -243,68 +228,69 @@ export function VariableControl({
     onVariableSelection(updatedVariables);
   };
 
-  // Group variables by category
   const categorizedVariables = categorizeVariables(filteredVariables);
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap gap-4">
-        <div className="flex-1 min-w-[250px]">
-          <Label htmlFor="metric">Output Metric</Label>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full justify-between mt-2">
-                {currentMetric}
-                <ChevronDown className="h-4 w-4 opacity-70" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56">
-              <DropdownMenuLabel>Select Metric</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {metrics.map((metric) => (
-                <DropdownMenuCheckboxItem
-                  key={metric}
-                  checked={currentMetric === metric}
-                  onCheckedChange={() => onMetricChange(metric)}
-                >
-                  {metric}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-        
-        {showBaseValueInput && (
+      {!hideMetricSelector && (
+        <div className="flex flex-wrap gap-4">
           <div className="flex-1 min-w-[250px]">
-            <Label htmlFor="baseValue">Base Value</Label>
-            <div className="flex items-center gap-2 mt-2">
-              <Button 
-                variant="outline" 
-                size="icon"
-                onClick={() => handleBaseValueAdjust(-Math.max(1, baseValue * 0.01))}
-              >
-                <Minus className="h-4 w-4" />
-              </Button>
-              <Input
-                id="baseValue"
-                type="number"
-                value={baseValue}
-                onChange={handleBaseValueInput}
-                className="text-center"
-              />
-              <Button 
-                variant="outline" 
-                size="icon"
-                onClick={() => handleBaseValueAdjust(Math.max(1, baseValue * 0.01))}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
+            <Label htmlFor="metric">Output Metric</Label>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full justify-between mt-2">
+                  {currentMetric}
+                  <ChevronDown className="h-4 w-4 opacity-70" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56">
+                <DropdownMenuLabel>Select Metric</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {metrics.map((metric) => (
+                  <DropdownMenuCheckboxItem
+                    key={metric}
+                    checked={currentMetric === metric}
+                    onCheckedChange={() => onMetricChange(metric)}
+                  >
+                    {metric}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-        )}
-      </div>
+          
+          {showBaseValueInput && (
+            <div className="flex-1 min-w-[250px]">
+              <Label htmlFor="baseValue">Base Value</Label>
+              <div className="flex items-center gap-2 mt-2">
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => handleBaseValueAdjust(-Math.max(1, baseValue * 0.01))}
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+                <Input
+                  id="baseValue"
+                  type="number"
+                  value={baseValue}
+                  onChange={handleBaseValueInput}
+                  className="text-center"
+                />
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => handleBaseValueAdjust(Math.max(1, baseValue * 0.01))}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
       
-      <Separator />
+      {!hideMetricSelector && <Separator />}
       
       <div>
         <Label htmlFor="variables" className="text-base font-medium">Select Input Variables for Sensitivity Analysis</Label>
@@ -433,9 +419,9 @@ export function VariableControl({
                       
                       <Slider
                         value={[variable.minValue, variable.maxValue]}
-                        min={variable.baseValue * 0.5}  // Allow up to 50% reduction
-                        max={variable.baseValue * 1.5}  // Allow up to 50% increase
-                        step={(variable.baseValue * 1.5 - variable.baseValue * 0.5) / 100} // 100 steps across the range
+                        min={variable.baseValue * 0.5}
+                        max={variable.baseValue * 1.5}
+                        step={(variable.baseValue * 1.5 - variable.baseValue * 0.5) / 100}
                         onValueChange={(values) => handleRangeChange(variable.id, [values[0], values[1]])}
                         className="my-4"
                       />
