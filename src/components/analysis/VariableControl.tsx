@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Check, ChevronDown, Search, Plus, Minus, X } from "lucide-react";
+import { Check, ChevronDown, Search, Plus, Minus, X, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -14,7 +14,11 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger 
+  DropdownMenuTrigger,
+  DropdownMenuGroup,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatNumber } from "@/lib/utils";
@@ -40,8 +44,38 @@ interface VariableControlProps {
   currentMetric: string;
   baseValue: number;
   onBaseValueChange: (value: number) => void;
-  showBaseValueInput?: boolean; // New optional prop with default value
+  showBaseValueInput?: boolean;
 }
+
+// Function to categorize variables into groups
+const categorizeVariables = (variables: AnalysisVariable[]) => {
+  const categories: Record<string, AnalysisVariable[]> = {
+    "Technical": [],
+    "Financial": [],
+    "Operational": [],
+    "Other": []
+  };
+  
+  // Categorize variables based on their category property
+  variables.forEach(variable => {
+    const category = mapCategoryToGroup(variable.category);
+    categories[category].push(variable);
+  });
+  
+  return categories;
+};
+
+// Map variable categories to higher-level groups
+const mapCategoryToGroup = (category: string): string => {
+  const technicalCategories = ["solar", "wind", "battery", "bess", "hydrogen", "production"];
+  const financialCategories = ["project-financing", "system-financing", "tax-credits", "tax"];
+  const operationalCategories = ["opex", "construction"];
+  
+  if (technicalCategories.includes(category)) return "Technical";
+  if (financialCategories.includes(category)) return "Financial";
+  if (operationalCategories.includes(category)) return "Operational";
+  return "Other";
+};
 
 export function VariableControl({
   availableVariables,
@@ -52,11 +86,11 @@ export function VariableControl({
   currentMetric,
   baseValue,
   onBaseValueChange,
-  showBaseValueInput = true // Default to true for backward compatibility
+  showBaseValueInput = true
 }: VariableControlProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredVariables, setFilteredVariables] = useState<AnalysisVariable[]>(availableVariables);
-  const [variableRanges, setVariableRanges] = useState<Record<string, { percentage: number }>>({});
+  const [variableRanges, setVariableRanges] = useState<Record<string, { minPercentage: number; maxPercentage: number }>>({}); 
   
   // Update filtered variables when search query changes or availableVariables changes
   useEffect(() => {
@@ -73,10 +107,16 @@ export function VariableControl({
     
     selectedVariables.forEach(variable => {
       if (!newRanges[variable.id]) {
-        newRanges[variable.id] = { percentage: 20 }; // Default to ±20%
+        // Default to ±20% range (symmetrical)
+        newRanges[variable.id] = { 
+          minPercentage: -20,
+          maxPercentage: 20
+        };
         updated = true;
         
         // Also update the impact value based on the default range
+        variable.minValue = variable.baseValue * 0.8;
+        variable.maxValue = variable.baseValue * 1.2;
         variable.impact = variable.baseValue * 0.2; // Set initial impact
       }
     });
@@ -98,12 +138,14 @@ export function VariableControl({
       const updated = selectedVariables.filter(v => v.id !== variable.id);
       onVariableSelection(updated);
     } else {
-      // Add the variable with initial impact calculation
-      const variableWithImpact = {
+      // Add the variable with initial min/max/impact calculation
+      const variableWithRange = {
         ...variable,
+        minValue: variable.baseValue * 0.8, // Default -20%
+        maxValue: variable.baseValue * 1.2, // Default +20%
         impact: variable.baseValue * 0.2 // Default 20% impact
       };
-      onVariableSelection([...selectedVariables, variableWithImpact]);
+      onVariableSelection([...selectedVariables, variableWithRange]);
     }
   };
   
@@ -112,20 +154,35 @@ export function VariableControl({
     onVariableSelection(updated);
   };
   
-  const handleRangeChange = (variableId: string, newPercentage: number) => {
+  const handleRangeChange = (variableId: string, minMax: [number, number]) => {
+    const variable = selectedVariables.find(v => v.id === variableId);
+    if (!variable) return;
+    
+    const baseVal = variable.baseValue;
+    const minPercentage = ((minMax[0] - baseVal) / baseVal) * 100;
+    const maxPercentage = ((minMax[1] - baseVal) / baseVal) * 100;
+    
     // Update the range in our local state
     setVariableRanges(prev => ({
       ...prev,
-      [variableId]: { percentage: newPercentage }
+      [variableId]: { 
+        minPercentage,
+        maxPercentage
+      }
     }));
     
-    // Update the impact value for this variable
+    // Update the impact value and min/max values for this variable
     const updatedVariables = selectedVariables.map(variable => {
       if (variable.id === variableId) {
-        // Calculate impact based on percentage of base value
         return {
           ...variable,
-          impact: variable.baseValue * (newPercentage / 100)
+          minValue: minMax[0],
+          maxValue: minMax[1],
+          // Use the larger percentage change for impact
+          impact: Math.max(
+            Math.abs(minMax[0] - baseVal),
+            Math.abs(minMax[1] - baseVal)
+          )
         };
       }
       return variable;
@@ -147,6 +204,47 @@ export function VariableControl({
       onBaseValueChange(value);
     }
   };
+
+  // Update the min/max values when the user directly enters them
+  const handleMinMaxInput = (variableId: string, isMin: boolean, value: string) => {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) return;
+    
+    const variable = selectedVariables.find(v => v.id === variableId);
+    if (!variable) return;
+    
+    const updatedVariables = selectedVariables.map(v => {
+      if (v.id === variableId) {
+        if (isMin) {
+          // Ensure min doesn't exceed max
+          const minValue = Math.min(numValue, v.maxValue);
+          return { ...v, minValue };
+        } else {
+          // Ensure max doesn't fall below min
+          const maxValue = Math.max(numValue, v.minValue);
+          return { ...v, maxValue };
+        }
+      }
+      return v;
+    });
+    
+    // Update the range percentages in state
+    const updatedVar = updatedVariables.find(v => v.id === variableId);
+    if (updatedVar) {
+      const minPercentage = ((updatedVar.minValue - updatedVar.baseValue) / updatedVar.baseValue) * 100;
+      const maxPercentage = ((updatedVar.maxValue - updatedVar.baseValue) / updatedVar.baseValue) * 100;
+      
+      setVariableRanges(prev => ({
+        ...prev,
+        [variableId]: { minPercentage, maxPercentage }
+      }));
+    }
+    
+    onVariableSelection(updatedVariables);
+  };
+
+  // Group variables by category
+  const categorizedVariables = categorizeVariables(filteredVariables);
 
   return (
     <div className="space-y-6">
@@ -209,7 +307,7 @@ export function VariableControl({
       <Separator />
       
       <div>
-        <Label htmlFor="variables">Input Variables</Label>
+        <Label htmlFor="variables" className="text-base font-medium">Select Input Variables for Sensitivity Analysis</Label>
         <div className="relative mt-2">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -233,34 +331,52 @@ export function VariableControl({
         
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="w-full mt-2">
+            <Button variant="outline" className="w-full mt-2 flex items-center gap-2">
+              <SlidersHorizontal className="h-4 w-4" />
               Select Variables
-              <ChevronDown className="h-4 w-4 ml-2 opacity-70" />
+              <ChevronDown className="h-4 w-4 ml-auto opacity-70" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-[300px]">
+          <DropdownMenuContent className="w-[350px]">
             <DropdownMenuLabel>Available Variables</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <ScrollArea className="h-[300px]">
-              {filteredVariables.length > 0 ? (
-                filteredVariables.map((variable) => (
-                  <DropdownMenuItem
-                    key={variable.id}
-                    onSelect={(e) => {
-                      e.preventDefault();
-                      handleVariableSelect(variable);
-                    }}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <span>{variable.name}</span>
-                      {selectedVariables.some(v => v.id === variable.id) && (
-                        <Check className="h-4 w-4" />
-                      )}
-                    </div>
-                  </DropdownMenuItem>
-                ))
-              ) : (
-                <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+            <ScrollArea className="h-[400px]">
+              {Object.entries(categorizedVariables).map(([category, variables]) => (
+                variables.length > 0 && (
+                  <DropdownMenuGroup key={category}>
+                    <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium bg-muted/50">
+                      {category}
+                    </DropdownMenuLabel>
+                    {variables.map((variable) => (
+                      <DropdownMenuItem
+                        key={variable.id}
+                        onSelect={(e) => {
+                          e.preventDefault();
+                          handleVariableSelect(variable);
+                        }}
+                        className="py-2"
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex flex-col">
+                            <span>{variable.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              Base: {formatNumber(variable.baseValue)} 
+                              {variable.unit && ` ${variable.unit}`}
+                            </span>
+                          </div>
+                          {selectedVariables.some(v => v.id === variable.id) && (
+                            <Check className="h-4 w-4 ml-2" />
+                          )}
+                        </div>
+                      </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuSeparator />
+                  </DropdownMenuGroup>
+                )
+              ))}
+              
+              {filteredVariables.length === 0 && (
+                <div className="px-3 py-6 text-center text-sm text-muted-foreground">
                   No variables found
                 </div>
               )}
@@ -269,58 +385,84 @@ export function VariableControl({
         </DropdownMenu>
       </div>
       
-      {selectedVariables.length > 0 && (
+      {selectedVariables.length === 0 ? (
+        <div className="bg-muted/30 rounded-lg p-6 text-center">
+          <SlidersHorizontal className="h-6 w-6 mx-auto mb-2 text-muted-foreground" />
+          <p className="text-muted-foreground">Select variables to begin sensitivity analysis</p>
+        </div>
+      ) : (
         <div className="space-y-4 mt-4">
-          <h3 className="text-sm font-medium">Selected Variables and Ranges</h3>
+          <h3 className="text-sm font-medium flex items-center">
+            Selected Variables and Ranges 
+            <Badge variant="outline" className="ml-2">{selectedVariables.length}</Badge>
+          </h3>
           
           <div className="space-y-6">
             {selectedVariables.map((variable) => {
-              const range = variableRanges[variable.id]?.percentage || 20;
+              const range = variableRanges[variable.id] || { minPercentage: -20, maxPercentage: 20 };
               
               return (
-                <div key={variable.id} className="space-y-2 bg-muted/30 rounded-lg p-3">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{variable.name}</span>
-                        <Badge variant="outline">{variable.category}</Badge>
-                      </div>
-                      <div className="text-sm text-muted-foreground mt-1">
-                        Base: {formatNumber(variable.baseValue)}
-                        {variable.unit && ` ${variable.unit}`}
-                      </div>
+                <div key={variable.id} className="space-y-3 bg-muted/20 border border-muted rounded-lg p-4 relative">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleRemoveVariable(variable.id)}
+                    className="absolute top-2 right-2 h-7 w-7"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                  
+                  <div>
+                    <div className="flex items-center gap-2 pr-6">
+                      <span className="font-medium">{variable.name}</span>
+                      <Badge variant="outline" className="text-xs">{variable.category}</Badge>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemoveVariable(variable.id)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      Base Case: {formatNumber(variable.baseValue)}
+                      {variable.unit && ` ${variable.unit}`}
+                    </div>
                   </div>
                   
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>-{range}%</span>
-                      <span>Range: ±{range}%</span>
-                      <span>+{range}%</span>
-                    </div>
-                    <Slider
-                      value={[range]}
-                      min={5}
-                      max={50}
-                      step={5}
-                      onValueChange={(values) => handleRangeChange(variable.id, values[0])}
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                      <span>
-                        {formatNumber(variable.baseValue * (1 - range / 100))}
-                        {variable.unit && ` ${variable.unit}`}
-                      </span>
-                      <span>
-                        {formatNumber(variable.baseValue * (1 + range / 100))}
-                        {variable.unit && ` ${variable.unit}`}
-                      </span>
+                  <div className="space-y-5 pt-2">
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Min</span>
+                        <span>Base</span>
+                        <span>Max</span>
+                      </div>
+                      
+                      <Slider
+                        value={[variable.minValue, variable.maxValue]}
+                        min={variable.baseValue * 0.5}  // Allow up to 50% reduction
+                        max={variable.baseValue * 1.5}  // Allow up to 50% increase
+                        step={(variable.baseValue * 1.5 - variable.baseValue * 0.5) / 100} // 100 steps across the range
+                        onValueChange={(values) => handleRangeChange(variable.id, [values[0], values[1]])}
+                        className="my-4"
+                      />
+                      
+                      <div className="flex justify-between gap-3">
+                        <div className="flex-1">
+                          <Input
+                            value={formatNumber(variable.minValue)}
+                            onChange={(e) => handleMinMaxInput(variable.id, true, e.target.value)}
+                            className="text-sm text-right"
+                          />
+                          <div className="text-xs text-muted-foreground text-right mt-1">
+                            {range.minPercentage.toFixed(0)}% of base
+                          </div>
+                        </div>
+                        
+                        <div className="flex-1">
+                          <Input
+                            value={formatNumber(variable.maxValue)}
+                            onChange={(e) => handleMinMaxInput(variable.id, false, e.target.value)}
+                            className="text-sm text-right"
+                          />
+                          <div className="text-xs text-muted-foreground text-right mt-1">
+                            {range.maxPercentage.toFixed(0)}% of base
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

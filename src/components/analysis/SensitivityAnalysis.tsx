@@ -190,10 +190,11 @@ export function SensitivityAnalysis() {
           currentMetric={currentMetric}
           baseValue={baseValue}
           onBaseValueChange={handleBaseValueChange}
-          showBaseValueInput={false} // Added this prop to control base value input visibility
+          showBaseValueInput={true} // Set to true to show base value input
         />
       </DataPanel>
       
+      {/* Fix the build error by properly passing props to SensitivityChart component */}
       <SensitivityChart 
         selectedVariables={selectedVariables}
         currentMetric={currentMetric}
