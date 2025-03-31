@@ -15,7 +15,8 @@ import {
   Upload,
   Activity,
   Calculator,
-  BarChartHorizontal
+  BarChartHorizontal,
+  FileChange
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -160,6 +161,16 @@ export function Sidebar() {
                 </div>
               )}
             </div>
+          </li>
+
+          <li>
+            <NavLink 
+              to="/change-orders" 
+              className={({ isActive }) => cn("nav-link", isActive && "active")}
+            >
+              <FileChange className="h-4 w-4" />
+              <span>EPC Design Change Orders</span>
+            </NavLink>
           </li>
 
           <li>

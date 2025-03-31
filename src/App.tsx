@@ -15,6 +15,7 @@ import LCOECalculator from "./pages/LCOECalculator";
 import MultiMetricAnalysis from "./pages/MultiMetricAnalysis";
 import InputsPage from "./pages/InputsPage";
 import OutputsPage from "./pages/OutputsPage";
+import ChangeOrders from "./pages/ChangeOrders";
 import { OutputsProvider } from "./hooks/use-outputs";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,9 @@ const App = () => (
             
             {/* Outputs Page */}
             <Route path="/outputs" element={<OutputsPage />} />
+            
+            {/* Change Orders */}
+            <Route path="/change-orders" element={<ChangeOrders />} />
             
             <Route path="*" element={<NotFound />} />
           </Routes>
