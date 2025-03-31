@@ -65,12 +65,15 @@ export function SensitivityChart({
     );
   }
 
-  if (selectedVariables.length === 0) {
+  // Check if both variables and metric are selected
+  if (selectedVariables.length === 0 || !currentMetric) {
     return (
       <DataPanel>
         <div className="flex flex-col items-center justify-center py-12">
           <p className="text-muted-foreground text-sm">
-            Select input variables to visualize their impact on {currentMetric}
+            {selectedVariables.length === 0 
+              ? "Select input variables to visualize their impact"
+              : "Select an output metric for sensitivity analysis"}
           </p>
         </div>
       </DataPanel>

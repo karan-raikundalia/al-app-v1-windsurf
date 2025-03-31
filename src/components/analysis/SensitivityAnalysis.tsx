@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { VariableControl, type AnalysisVariable } from "./VariableControl";
 import { DataPanel } from "@/components/ui/DataPanel";
@@ -15,7 +16,7 @@ import { Label } from "@/components/ui/label";
 
 export function SensitivityAnalysis() {
   const [selectedVariables, setSelectedVariables] = useState<AnalysisVariable[]>([]);
-  const [currentMetric, setCurrentMetric] = useState("NPV");
+  const [currentMetric, setCurrentMetric] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [baseValue, setBaseValue] = useState(1000000); // Default base value for the analysis
   const [savedAnalyses, setSavedAnalyses] = useState<Array<{
@@ -119,6 +120,15 @@ export function SensitivityAnalysis() {
       return;
     }
     
+    if (!currentMetric) {
+      toast({
+        title: "No metric selected",
+        description: "Please select an output metric to save this analysis.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     const id = `analysis-${Date.now()}`;
     const newSavedAnalysis = {
       id,
@@ -138,6 +148,7 @@ export function SensitivityAnalysis() {
   
   const handleResetAnalysis = () => {
     setSelectedVariables([]);
+    setCurrentMetric("");
     toast({
       description: "Analysis has been reset. You can now start a new analysis."
     });

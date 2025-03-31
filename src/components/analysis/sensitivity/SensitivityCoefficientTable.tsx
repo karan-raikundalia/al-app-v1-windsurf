@@ -240,10 +240,19 @@ export function SensitivityCoefficientTable({
       
       <CollapsibleContent>
         <div className="mt-2 relative">
-          {variables.length === 0 ? (
+          {variables.length === 0 || !currentMetric ? (
             <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
-              <p>No variables selected for analysis.</p>
-              <p className="text-sm">Select variables to see sensitivity coefficients.</p>
+              {variables.length === 0 ? (
+                <>
+                  <p>No variables selected for analysis.</p>
+                  <p className="text-sm">Select variables to see sensitivity coefficients.</p>
+                </>
+              ) : (
+                <>
+                  <p>No output metric selected.</p>
+                  <p className="text-sm">Select an output metric for sensitivity analysis.</p>
+                </>
+              )}
             </div>
           ) : (
             <Table className="border">
