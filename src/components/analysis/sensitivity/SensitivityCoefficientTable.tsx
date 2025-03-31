@@ -45,12 +45,12 @@ export function SensitivityCoefficientTable({
   const [sortColumn, setSortColumn] = useState("coefficient");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   
-  // Calculate sensitivity coefficients
+  // Calculate sensitivity coefficients using fixed sensitivity range (not slider values)
   const calculateCoefficients = () => {
     const rangePercent = parseInt(sensitivityRange) / 100;
     
     return variables.map(variable => {
-      // Calculate positive and negative impacts
+      // Calculate positive and negative impacts using fixed percentage range
       const positiveValue = variable.baseValue * (1 + rangePercent);
       const negativeValue = variable.baseValue * (1 - rangePercent);
       
@@ -344,9 +344,14 @@ export function SensitivityCoefficientTable({
             </Table>
           )}
         </div>
+        
+        <div className="text-xs text-center text-muted-foreground mt-3">
+          Values show percentage change in {currentMetric} when each variable is adjusted ±{sensitivityRange}%
+        </div>
       </CollapsibleContent>
     </Collapsible>
   );
+}
   
   // Get the sort indicator arrow based on current sort state
   function getSortIndicator(column: string) {

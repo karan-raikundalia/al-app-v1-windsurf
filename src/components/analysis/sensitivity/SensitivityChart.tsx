@@ -37,8 +37,13 @@ export function SensitivityChart({
   
   // Transform the variables data for the TornadoChart component
   const transformedData = selectedVariables.map(variable => {
-    // Calculate positive and negative impacts
-    // For absolute values
+    // Use the actual variable ranges set by the sliders
+    const variableRange = Math.max(
+      Math.abs(variable.minValue - variable.baseValue),
+      Math.abs(variable.maxValue - variable.baseValue)
+    );
+    
+    // Calculate positive and negative impacts based on the custom ranges
     const positiveImpact = displayMode === "absolute" 
       ? variable.impact 
       : (variable.impact / baseValue) * 100;
@@ -163,14 +168,6 @@ export function SensitivityChart({
           sortBy={sortBy}
           onVariableClick={(variable) => console.log("Clicked on:", variable)}
         />
-        
-        <div className="text-xs text-center text-muted-foreground">
-          {displayMode === "absolute" ? (
-            <p>Values show absolute change in {currentMetric} when each variable is adjusted ±20%</p>
-          ) : (
-            <p>Values show percentage change in {currentMetric} when each variable is adjusted ±20%</p>
-          )}
-        </div>
       </div>
     </DataPanel>
   );
