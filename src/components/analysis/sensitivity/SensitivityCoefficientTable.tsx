@@ -173,6 +173,14 @@ export function SensitivityCoefficientTable({
   
   const availableCategories = ["All", ...new Set(variables.map(v => v.category))];
   
+  // Get the sort indicator arrow based on current sort state
+  const getSortIndicator = (column: string) => {
+    if (sortColumn === column) {
+      return sortDirection === "asc" ? <ChevronUp className="h-4 w-4 inline" /> : <ChevronDown className="h-4 w-4 inline" />;
+    }
+    return null;
+  };
+  
   return (
     <Collapsible open={isExpanded} onOpenChange={setIsExpanded} className="mt-4">
       <div className="flex items-center justify-between border-b pb-2">
@@ -351,13 +359,4 @@ export function SensitivityCoefficientTable({
       </CollapsibleContent>
     </Collapsible>
   );
-}
-  
-  // Get the sort indicator arrow based on current sort state
-  function getSortIndicator(column: string) {
-    if (sortColumn === column) {
-      return sortDirection === "asc" ? <ChevronUp className="h-4 w-4 inline" /> : <ChevronDown className="h-4 w-4 inline" />;
-    }
-    return null;
-  }
 }
