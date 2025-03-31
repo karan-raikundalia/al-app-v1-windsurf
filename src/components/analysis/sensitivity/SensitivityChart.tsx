@@ -13,10 +13,13 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { DataPanel } from "@/components/ui/DataPanel";
+import { cn } from "@/lib/utils";
 
 interface SensitivityChartProps {
   selectedVariables: AnalysisVariable[];
   currentMetric: string;
+  selectedMetrics: string[];
+  onMetricChange: (metric: string) => void;
   isLoading: boolean;
   baseValue: number;
 }
@@ -24,6 +27,8 @@ interface SensitivityChartProps {
 export function SensitivityChart({ 
   selectedVariables, 
   currentMetric, 
+  selectedMetrics,
+  onMetricChange,
   isLoading,
   baseValue
 }: SensitivityChartProps) {
@@ -65,15 +70,15 @@ export function SensitivityChart({
     );
   }
 
-  // Check if both variables and metric are selected
-  if (selectedVariables.length === 0 || !currentMetric) {
+  // Check if both variables and metrics are selected
+  if (selectedVariables.length === 0 || selectedMetrics.length === 0) {
     return (
       <DataPanel>
         <div className="flex flex-col items-center justify-center py-12">
           <p className="text-muted-foreground text-sm">
             {selectedVariables.length === 0 
               ? "Select input variables to visualize their impact"
-              : "Select an output metric for sensitivity analysis"}
+              : "Select output metrics for sensitivity analysis"}
           </p>
         </div>
       </DataPanel>
@@ -83,47 +88,73 @@ export function SensitivityChart({
   return (
     <DataPanel>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">
-            Sensitivity to {currentMetric}
-          </h3>
-          <div className="flex gap-2">
-            <div>
-              <Label htmlFor="sort-by" className="sr-only">Sort by</Label>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" id="sort-by">
-                    Sort: {sortBy === "impact" ? "By Impact" : "Alphabetical"}
-                    <ChevronDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuRadioGroup value={sortBy} onValueChange={(value) => setSortBy(value as "impact" | "alphabetical")}>
-                    <DropdownMenuRadioItem value="impact">By Impact</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="alphabetical">Alphabetical</DropdownMenuRadioItem>
-                  </DropdownMenuRadioGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-            
-            <div>
-              <Label htmlFor="display-mode" className="sr-only">Display mode</Label>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" id="display-mode">
-                    {displayMode === "absolute" ? "Absolute" : "Percentage"}
-                    <ChevronDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuRadioGroup value={displayMode} onValueChange={(value) => setDisplayMode(value as "absolute" | "percentage")}>
-                    <DropdownMenuRadioItem value="absolute">Absolute</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="percentage">Percentage (%)</DropdownMenuRadioItem>
-                  </DropdownMenuRadioGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
+        <div className="flex flex-col space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">
+              Sensitivity Analysis
+            </h3>
+            <div className="flex gap-2">
+              <div>
+                <Label htmlFor="sort-by" className="sr-only">Sort by</Label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" id="sort-by">
+                      Sort: {sortBy === "impact" ? "By Impact" : "Alphabetical"}
+                      <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuRadioGroup value={sortBy} onValueChange={(value) => setSortBy(value as "impact" | "alphabetical")}>
+                      <DropdownMenuRadioItem value="impact">By Impact</DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="alphabetical">Alphabetical</DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              
+              <div>
+                <Label htmlFor="display-mode" className="sr-only">Display mode</Label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" id="display-mode">
+                      {displayMode === "absolute" ? "Absolute" : "Percentage"}
+                      <ChevronDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuRadioGroup value={displayMode} onValueChange={(value) => setDisplayMode(value as "absolute" | "percentage")}>
+                      <DropdownMenuRadioItem value="absolute">Absolute</DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="percentage">Percentage (%)</DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </div>
+          
+          {/* Metric Pills/Tabs */}
+          <div className="flex flex-wrap gap-2 pb-2 border-b">
+            {selectedMetrics.map(metric => (
+              <Button 
+                key={metric}
+                variant={metric === currentMetric ? "default" : "outline"}
+                size="sm" 
+                className={cn(
+                  "rounded-full h-8",
+                  metric === currentMetric ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted"
+                )}
+                onClick={() => onMetricChange(metric)}
+              >
+                {metric}
+              </Button>
+            ))}
+          </div>
+          
+          {currentMetric && (
+            <h4 className="text-sm font-medium text-muted-foreground">
+              Showing impact on {currentMetric}
+            </h4>
+          )}
         </div>
         
         <TornadoChart 

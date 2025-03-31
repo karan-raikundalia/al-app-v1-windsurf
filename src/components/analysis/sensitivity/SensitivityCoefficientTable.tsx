@@ -20,10 +20,13 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AnalysisVariable } from "../VariableControl";
 import { formatNumber } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 interface SensitivityCoefficientTableProps {
   variables: AnalysisVariable[];
   currentMetric: string;
+  selectedMetrics: string[];
+  onMetricChange: (metric: string) => void;
   baseValue: number;
 }
 
@@ -32,6 +35,8 @@ type SensitivityRange = "5" | "10" | "15" | "20";
 export function SensitivityCoefficientTable({ 
   variables, 
   currentMetric, 
+  selectedMetrics,
+  onMetricChange,
   baseValue 
 }: SensitivityCoefficientTableProps) {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -239,8 +244,28 @@ export function SensitivityCoefficientTable({
       </div>
       
       <CollapsibleContent>
+        {/* Metric Pills/Tabs */}
+        {selectedMetrics.length > 0 && (
+          <div className="flex flex-wrap gap-2 pt-3 pb-3">
+            {selectedMetrics.map(metric => (
+              <Button 
+                key={metric}
+                variant={metric === currentMetric ? "default" : "outline"}
+                size="sm" 
+                className={cn(
+                  "rounded-full h-8",
+                  metric === currentMetric ? "bg-primary text-primary-foreground" : "bg-background hover:bg-muted"
+                )}
+                onClick={() => onMetricChange(metric)}
+              >
+                {metric}
+              </Button>
+            ))}
+          </div>
+        )}
+        
         <div className="mt-2 relative">
-          {variables.length === 0 || !currentMetric ? (
+          {variables.length === 0 || selectedMetrics.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground">
               {variables.length === 0 ? (
                 <>
@@ -249,8 +274,8 @@ export function SensitivityCoefficientTable({
                 </>
               ) : (
                 <>
-                  <p>No output metric selected.</p>
-                  <p className="text-sm">Select an output metric for sensitivity analysis.</p>
+                  <p>No output metrics selected.</p>
+                  <p className="text-sm">Select output metrics for sensitivity analysis.</p>
                 </>
               )}
             </div>

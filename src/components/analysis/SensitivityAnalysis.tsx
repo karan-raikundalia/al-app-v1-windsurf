@@ -9,16 +9,20 @@ import { useToast } from "@/components/ui/use-toast";
 import { useInputs } from "@/hooks/use-inputs";
 import { useOutputs } from "@/hooks/use-outputs";
 import { Button } from "@/components/ui/button";
-import { SaveIcon, RotateCcw } from "lucide-react";
+import { SaveIcon, RotateCcw, PlusCircle, X } from "lucide-react";
 import { transformInputToAnalysisVariable, calculateLCOE, calculateLCOH } from "./sensitivity/SensitivityData";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 export function SensitivityAnalysis() {
   const [selectedVariables, setSelectedVariables] = useState<AnalysisVariable[]>([]);
+  const [selectedMetrics, setSelectedMetrics] = useState<string[]>([]);
   const [currentMetric, setCurrentMetric] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [baseValue, setBaseValue] = useState(1000000); // Default base value for the analysis
+  const [baseValues, setBaseValues] = useState<Record<string, number>>({});
   const [savedAnalyses, setSavedAnalyses] = useState<Array<{
     id: string;
     name: string;
@@ -72,13 +76,27 @@ export function SensitivityAnalysis() {
     setSelectedVariables(variables);
   };
 
-  const handleMetricChange = (metric: string) => {
-    setCurrentMetric(metric);
+  const handleMetricSelection = (metric: string) => {
+    // If metric is already selected, don't add it again
+    if (selectedMetrics.includes(metric)) return;
+    
+    // Limit to 5 metrics
+    if (selectedMetrics.length >= 5) {
+      toast({
+        title: "Maximum metrics reached",
+        description: "You can select up to 5 metrics for analysis.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     const selectedOutput = getAllOutputs().find(output => output.name === metric);
     
     if (selectedOutput) {
-      setBaseValue(selectedOutput.value);
+      setBaseValues(prev => ({
+        ...prev,
+        [metric]: selectedOutput.value
+      }));
     } else {
       const metricBaseValues: Record<string, number> = {
         "NPV": 1000000,
@@ -97,7 +115,18 @@ export function SensitivityAnalysis() {
         "Gearing Ratio": 70
       };
       
-      setBaseValue(metricBaseValues[metric] || 0);
+      setBaseValues(prev => ({
+        ...prev,
+        [metric]: metricBaseValues[metric] || 0
+      }));
+    }
+
+    // Add the metric to selected metrics
+    setSelectedMetrics(prev => [...prev, metric]);
+    
+    // If no metric is currently active, set this as the current metric
+    if (!currentMetric) {
+      setCurrentMetric(metric);
     }
     
     setIsLoading(true);
@@ -106,8 +135,29 @@ export function SensitivityAnalysis() {
     }, 800);
   };
   
-  const handleBaseValueChange = (newBaseValue: number) => {
-    setBaseValue(newBaseValue);
+  const handleRemoveMetric = (metricToRemove: string) => {
+    setSelectedMetrics(prev => prev.filter(metric => metric !== metricToRemove));
+    
+    // If removing the current metric, select another one if available
+    if (currentMetric === metricToRemove) {
+      const remainingMetrics = selectedMetrics.filter(metric => metric !== metricToRemove);
+      if (remainingMetrics.length > 0) {
+        setCurrentMetric(remainingMetrics[0]);
+      } else {
+        setCurrentMetric("");
+      }
+    }
+  };
+
+  const handleBaseValueChange = (newBaseValue: number, metric?: string) => {
+    if (metric) {
+      setBaseValues(prev => ({
+        ...prev,
+        [metric]: newBaseValue
+      }));
+    } else {
+      setBaseValue(newBaseValue);
+    }
   };
   
   const handleSaveAnalysis = () => {
@@ -120,10 +170,10 @@ export function SensitivityAnalysis() {
       return;
     }
     
-    if (!currentMetric) {
+    if (selectedMetrics.length === 0) {
       toast({
-        title: "No metric selected",
-        description: "Please select an output metric to save this analysis.",
+        title: "No metrics selected",
+        description: "Please select at least one output metric to save this analysis.",
         variant: "destructive"
       });
       return;
@@ -132,22 +182,23 @@ export function SensitivityAnalysis() {
     const id = `analysis-${Date.now()}`;
     const newSavedAnalysis = {
       id,
-      name: `${currentMetric} Analysis ${savedAnalyses.length + 1}`,
-      metric: currentMetric,
+      name: `${selectedMetrics.join(", ")} Analysis ${savedAnalyses.length + 1}`,
+      metric: selectedMetrics.join(", "),
       variables: selectedVariables,
-      baseValue
+      baseValue: baseValues[currentMetric] || baseValue
     };
     
     setSavedAnalyses(prev => [...prev, newSavedAnalysis]);
     
     toast({
       title: "Analysis saved",
-      description: `${currentMetric} analysis has been saved and can be accessed later.`
+      description: `${selectedMetrics.join(", ")} analysis has been saved and can be accessed later.`
     });
   };
   
   const handleResetAnalysis = () => {
     setSelectedVariables([]);
+    setSelectedMetrics([]);
     setCurrentMetric("");
     toast({
       description: "Analysis has been reset. You can now start a new analysis."
@@ -209,44 +260,80 @@ export function SensitivityAnalysis() {
         <div className="col-span-6 space-y-6">
           <DataPanel>
             <div className="flex flex-col space-y-4">
-              <h3 className="text-lg font-semibold">Output Metric</h3>
-              <div className="w-full max-w-xs">
-                <Label htmlFor="metric-selector">Metric to Analyze</Label>
-                <Select value={currentMetric} onValueChange={handleMetricChange}>
-                  <SelectTrigger id="metric-selector" className="w-full">
-                    <SelectValue placeholder="Select metric" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {outputMetrics.map(metric => (
-                      <SelectItem key={metric} value={metric}>
-                        {metric}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <h3 className="text-lg font-semibold">Output Metrics</h3>
+              <div className="flex items-center gap-2">
+                <div className="w-full max-w-xs">
+                  <Select value="" onValueChange={handleMetricSelection}>
+                    <SelectTrigger id="metric-selector" className="w-full">
+                      <SelectValue placeholder="Add metric (up to 5)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {outputMetrics
+                        .filter(metric => !selectedMetrics.includes(metric))
+                        .map(metric => (
+                          <SelectItem key={metric} value={metric}>
+                            {metric}
+                          </SelectItem>
+                        ))
+                      }
+                    </SelectContent>
+                  </Select>
+                </div>
+                <span className="text-sm text-muted-foreground">
+                  {selectedMetrics.length}/5 metrics selected
+                </span>
               </div>
+              
+              {selectedMetrics.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {selectedMetrics.map(metric => (
+                    <Badge 
+                      key={metric}
+                      variant={metric === currentMetric ? "default" : "outline"}
+                      className={cn(
+                        "px-3 py-1 cursor-pointer text-sm flex items-center gap-1",
+                        metric === currentMetric ? "bg-primary text-primary-foreground" : "bg-secondary/30"
+                      )}
+                      onClick={() => setCurrentMetric(metric)}
+                    >
+                      {metric}
+                      <X 
+                        className="h-3.5 w-3.5 ml-1 cursor-pointer hover:text-destructive" 
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent triggering the badge click
+                          handleRemoveMetric(metric);
+                        }} 
+                      />
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
           </DataPanel>
         
           <SensitivityChart 
             selectedVariables={selectedVariables}
             currentMetric={currentMetric}
+            selectedMetrics={selectedMetrics}
+            onMetricChange={setCurrentMetric}
             isLoading={isLoading}
-            baseValue={baseValue}
+            baseValue={baseValues[currentMetric] || baseValue}
           />
           
           <DataPanel>
             <SensitivityCoefficientTable
               variables={selectedVariables}
               currentMetric={currentMetric}
-              baseValue={baseValue}
+              selectedMetrics={selectedMetrics}
+              onMetricChange={setCurrentMetric}
+              baseValue={baseValues[currentMetric] || baseValue}
             />
           </DataPanel>
           
           <SensitivitySummary 
             selectedVariables={selectedVariables}
             currentMetric={currentMetric}
-            baseValue={baseValue}
+            baseValue={baseValues[currentMetric] || baseValue}
           />
         </div>
       </div>
