@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { TornadoChart } from "../TornadoChart";
 import { AnalysisVariable } from "../VariableControl";
@@ -35,15 +34,12 @@ export function SensitivityChart({
   const [sortBy, setSortBy] = useState<"impact" | "alphabetical">("impact");
   const [displayMode, setDisplayMode] = useState<"absolute" | "percentage">("absolute");
   
-  // Transform the variables data for the TornadoChart component
   const transformedData = selectedVariables.map(variable => {
-    // Use the actual variable ranges set by the sliders
     const variableRange = Math.max(
       Math.abs(variable.minValue - variable.baseValue),
       Math.abs(variable.maxValue - variable.baseValue)
     );
     
-    // Calculate positive and negative impacts based on the custom ranges
     const positiveImpact = displayMode === "absolute" 
       ? variable.impact 
       : (variable.impact / baseValue) * 100;
@@ -75,7 +71,6 @@ export function SensitivityChart({
     );
   }
 
-  // Check if both variables and metrics are selected
   if (selectedVariables.length === 0 || selectedMetrics.length === 0) {
     return (
       <DataPanel>
@@ -96,7 +91,7 @@ export function SensitivityChart({
         <div className="flex flex-col space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">
-              Sensitivity Analysis
+              Tornado Diagram
             </h3>
             <div className="flex gap-2">
               <div>
@@ -137,7 +132,6 @@ export function SensitivityChart({
             </div>
           </div>
           
-          {/* Metric Pills/Tabs */}
           <div className="flex flex-wrap gap-2 pb-2 border-b">
             {selectedMetrics.map(metric => (
               <Button 
