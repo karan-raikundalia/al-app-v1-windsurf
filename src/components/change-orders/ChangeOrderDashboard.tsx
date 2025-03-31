@@ -181,57 +181,59 @@ export function ChangeOrderDashboard() {
         </div>
       </div>
 
-      <TabsContent value="dashboard" className="space-y-6 mt-0">
-        <div className="grid grid-cols-12 gap-6">
-          <div className="col-span-12">
-            <DataPanel title="Monthly Change Orders & Cumulative Cost Impact">
-              <MonthlyChangeOrderChart 
-                data={mockChangeOrderSummary.monthlyData} 
-                timelineValue={timelineValue[0]} 
-                forecastedCount={mockChangeOrderSummary.forecastedCount}
-                budgetAmount={mockChangeOrderSummary.budgetAmount}
-                onBarClick={handleChangeOrderClick}
-              />
-            </DataPanel>
-          </div>
+      <Tabs value={activeTab}>
+        <TabsContent value="dashboard" className="space-y-6 mt-0">
+          <div className="grid grid-cols-12 gap-6">
+            <div className="col-span-12">
+              <DataPanel title="Monthly Change Orders & Cumulative Cost Impact">
+                <MonthlyChangeOrderChart 
+                  data={mockChangeOrderSummary.monthlyData} 
+                  timelineValue={timelineValue[0]} 
+                  forecastedCount={mockChangeOrderSummary.forecastedCount}
+                  budgetAmount={mockChangeOrderSummary.budgetAmount}
+                  onBarClick={handleChangeOrderClick}
+                />
+              </DataPanel>
+            </div>
 
-          <div className="col-span-4">
-            <DataPanel title="Severity Distribution">
-              <SeverityDistributionChart 
-                data={mockChangeOrderSummary.severityDistribution} 
-                onSliceClick={(severity) => setSeverityFilter(severity)}
-              />
-            </DataPanel>
-          </div>
+            <div className="col-span-4">
+              <DataPanel title="Severity Distribution">
+                <SeverityDistributionChart 
+                  data={mockChangeOrderSummary.severityDistribution} 
+                  onSliceClick={(severity) => setSeverityFilter(severity)}
+                />
+              </DataPanel>
+            </div>
 
-          <div className="col-span-4">
-            <DataPanel title="Top 5 Change Order Causes">
-              <TopCausesTable 
-                causes={mockChangeOrderSummary.topCauses} 
-                onCauseClick={(cause) => console.log(`Filter by cause: ${cause}`)}
-              />
-            </DataPanel>
-          </div>
+            <div className="col-span-4">
+              <DataPanel title="Top 5 Change Order Causes">
+                <TopCausesTable 
+                  causes={mockChangeOrderSummary.topCauses} 
+                  onCauseClick={(cause) => console.log(`Filter by cause: ${cause}`)}
+                />
+              </DataPanel>
+            </div>
 
-          <div className="col-span-4">
-            <DataPanel title="Approval Status Tracker">
-              <StatusTracker 
-                statuses={mockChangeOrderSummary.statusDistribution}
-                averageApprovalDays={mockChangeOrderSummary.averageApprovalDays}
-              />
-            </DataPanel>
+            <div className="col-span-4">
+              <DataPanel title="Approval Status Tracker">
+                <StatusTracker 
+                  statuses={mockChangeOrderSummary.statusDistribution}
+                  averageApprovalDays={mockChangeOrderSummary.averageApprovalDays}
+                />
+              </DataPanel>
+            </div>
           </div>
-        </div>
-      </TabsContent>
+        </TabsContent>
 
-      <TabsContent value="list" className="mt-0">
-        <DataPanel>
-          <ChangeOrderTable 
-            changeOrders={filteredChangeOrders} 
-            onRowClick={handleChangeOrderClick}
-          />
-        </DataPanel>
-      </TabsContent>
+        <TabsContent value="list" className="mt-0">
+          <DataPanel>
+            <ChangeOrderTable 
+              changeOrders={filteredChangeOrders} 
+              onRowClick={handleChangeOrderClick}
+            />
+          </DataPanel>
+        </TabsContent>
+      </Tabs>
 
       {selectedChangeOrderData && (
         <ChangeOrderDetailView 
