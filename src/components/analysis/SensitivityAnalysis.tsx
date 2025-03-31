@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { VariableControl, type AnalysisVariable } from "./VariableControl";
 import { DataPanel } from "@/components/ui/DataPanel";
 import { SensitivityChart } from "./sensitivity/SensitivityChart";
 import { SensitivitySummary } from "./sensitivity/SensitivitySummary";
+import { SensitivityCoefficientTable } from "./sensitivity/SensitivityCoefficientTable";
 import { useToast } from "@/components/ui/use-toast";
 import { useInputs } from "@/hooks/use-inputs";
 import { useOutputs } from "@/hooks/use-outputs";
@@ -30,11 +30,9 @@ export function SensitivityAnalysis() {
   const { getAllOutputs } = useOutputs();
   const { toast } = useToast();
   
-  // Calculate derived metrics
   const lcoeValue = calculateLCOE(inputs);
   const lcohValue = calculateLCOH(inputs);
   
-  // Add derived metrics to the available variables
   const derivedMetricInputs = [
     {
       id: "derived-lcoe",
@@ -62,10 +60,8 @@ export function SensitivityAnalysis() {
     }
   ];
   
-  // Get the list of output metrics from the outputs hook
   const outputMetrics = getAllOutputs().map(output => output.name);
   
-  // Transform inputs to analysis variables whenever inputs change
   const availableVariables = [
     ...inputs.map(input => transformInputToAnalysisVariable(input)),
     ...derivedMetricInputs.map(input => transformInputToAnalysisVariable(input))
@@ -78,14 +74,11 @@ export function SensitivityAnalysis() {
   const handleMetricChange = (metric: string) => {
     setCurrentMetric(metric);
     
-    // Find the selected output to get its base value
     const selectedOutput = getAllOutputs().find(output => output.name === metric);
     
-    // Update base value based on the selected metric
     if (selectedOutput) {
       setBaseValue(selectedOutput.value);
     } else {
-      // Fallback to default values if not found in outputs
       const metricBaseValues: Record<string, number> = {
         "NPV": 1000000,
         "IRR": 12,
@@ -106,7 +99,6 @@ export function SensitivityAnalysis() {
       setBaseValue(metricBaseValues[metric] || 0);
     }
     
-    // Simulate loading
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
@@ -183,7 +175,6 @@ export function SensitivityAnalysis() {
       </p>
       
       <div className="grid grid-cols-10 gap-6">
-        {/* Left panel - 40% width (4 cols out of 10) */}
         <div className="col-span-4 space-y-6">
           <DataPanel>
             <div className="space-y-4">
@@ -193,18 +184,17 @@ export function SensitivityAnalysis() {
                 onVariableSelection={handleVariableSelection}
                 selectedVariables={selectedVariables}
                 metrics={outputMetrics}
-                onMetricChange={() => {}} // Empty function since metric change is handled in right panel
+                onMetricChange={() => {}}
                 currentMetric={currentMetric}
                 baseValue={baseValue}
                 onBaseValueChange={handleBaseValueChange}
-                showBaseValueInput={false} // Hide base value input
-                hideMetricSelector={true} // Hide metric selector in left panel
+                showBaseValueInput={false}
+                hideMetricSelector={true}
               />
             </div>
           </DataPanel>
         </div>
 
-        {/* Right panel - 60% width (6 cols out of 10) */}
         <div className="col-span-6 space-y-6">
           <DataPanel>
             <div className="flex flex-col space-y-4">
@@ -233,6 +223,14 @@ export function SensitivityAnalysis() {
             isLoading={isLoading}
             baseValue={baseValue}
           />
+          
+          <DataPanel>
+            <SensitivityCoefficientTable
+              variables={selectedVariables}
+              currentMetric={currentMetric}
+              baseValue={baseValue}
+            />
+          </DataPanel>
           
           <SensitivitySummary 
             selectedVariables={selectedVariables}
