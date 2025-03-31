@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ChangeOrderDetailView } from "./ChangeOrderDetailView";
 import { ChangeOrderTable } from "./ChangeOrderTable";
+import { ProjectMetricsGrid } from "./ProjectMetricsGrid";
 
 export function ChangeOrderDashboard() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -220,6 +221,13 @@ export function ChangeOrderDashboard() {
                   statuses={mockChangeOrderSummary.statusDistribution}
                   averageApprovalDays={mockChangeOrderSummary.averageApprovalDays}
                 />
+              </DataPanel>
+            </div>
+            
+            {/* New Project Metrics Section */}
+            <div className="col-span-12">
+              <DataPanel title="Project Performance Metrics">
+                <ProjectMetricsGrid />
               </DataPanel>
             </div>
           </div>
