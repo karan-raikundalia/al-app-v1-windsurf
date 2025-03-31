@@ -19,7 +19,8 @@ import { cn } from "@/lib/utils";
 export function SensitivityAnalysis() {
   const [selectedVariables, setSelectedVariables] = useState<AnalysisVariable[]>([]);
   const [selectedMetrics, setSelectedMetrics] = useState<string[]>([]);
-  const [currentMetric, setCurrentMetric] = useState("");
+  const [chartMetric, setChartMetric] = useState("");
+  const [tableMetric, setTableMetric] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [baseValue, setBaseValue] = useState(1000000); // Default base value for the analysis
   const [baseValues, setBaseValues] = useState<Record<string, number>>({});
@@ -124,9 +125,14 @@ export function SensitivityAnalysis() {
     // Add the metric to selected metrics
     setSelectedMetrics(prev => [...prev, metric]);
     
-    // If no metric is currently active, set this as the current metric
-    if (!currentMetric) {
-      setCurrentMetric(metric);
+    // If no metric is currently active for the chart, set this as the chart metric
+    if (!chartMetric) {
+      setChartMetric(metric);
+    }
+    
+    // If no metric is currently active for the table, set this as the table metric
+    if (!tableMetric) {
+      setTableMetric(metric);
     }
     
     setIsLoading(true);
@@ -138,13 +144,23 @@ export function SensitivityAnalysis() {
   const handleRemoveMetric = (metricToRemove: string) => {
     setSelectedMetrics(prev => prev.filter(metric => metric !== metricToRemove));
     
-    // If removing the current metric, select another one if available
-    if (currentMetric === metricToRemove) {
+    // If removing the current chart metric, select another one if available
+    if (chartMetric === metricToRemove) {
       const remainingMetrics = selectedMetrics.filter(metric => metric !== metricToRemove);
       if (remainingMetrics.length > 0) {
-        setCurrentMetric(remainingMetrics[0]);
+        setChartMetric(remainingMetrics[0]);
       } else {
-        setCurrentMetric("");
+        setChartMetric("");
+      }
+    }
+    
+    // If removing the current table metric, select another one if available
+    if (tableMetric === metricToRemove) {
+      const remainingMetrics = selectedMetrics.filter(metric => metric !== metricToRemove);
+      if (remainingMetrics.length > 0) {
+        setTableMetric(remainingMetrics[0]);
+      } else {
+        setTableMetric("");
       }
     }
   };
@@ -185,7 +201,7 @@ export function SensitivityAnalysis() {
       name: `${selectedMetrics.join(", ")} Analysis ${savedAnalyses.length + 1}`,
       metric: selectedMetrics.join(", "),
       variables: selectedVariables,
-      baseValue: baseValues[currentMetric] || baseValue
+      baseValue: baseValues[chartMetric] || baseValue
     };
     
     setSavedAnalyses(prev => [...prev, newSavedAnalysis]);
@@ -199,7 +215,8 @@ export function SensitivityAnalysis() {
   const handleResetAnalysis = () => {
     setSelectedVariables([]);
     setSelectedMetrics([]);
-    setCurrentMetric("");
+    setChartMetric("");
+    setTableMetric("");
     toast({
       description: "Analysis has been reset. You can now start a new analysis."
     });
@@ -247,7 +264,7 @@ export function SensitivityAnalysis() {
                 selectedVariables={selectedVariables}
                 metrics={outputMetrics}
                 onMetricChange={() => {}}
-                currentMetric={currentMetric}
+                currentMetric={chartMetric}
                 baseValue={baseValue}
                 onBaseValueChange={handleBaseValueChange}
                 showBaseValueInput={false}
@@ -289,20 +306,13 @@ export function SensitivityAnalysis() {
                   {selectedMetrics.map(metric => (
                     <Badge 
                       key={metric}
-                      variant={metric === currentMetric ? "default" : "outline"}
-                      className={cn(
-                        "px-3 py-1 cursor-pointer text-sm flex items-center gap-1",
-                        metric === currentMetric ? "bg-primary text-primary-foreground" : "bg-secondary/30"
-                      )}
-                      onClick={() => setCurrentMetric(metric)}
+                      variant="outline"
+                      className="px-3 py-1 flex items-center gap-1 bg-secondary/30"
                     >
                       {metric}
                       <X 
                         className="h-3.5 w-3.5 ml-1 cursor-pointer hover:text-destructive" 
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent triggering the badge click
-                          handleRemoveMetric(metric);
-                        }} 
+                        onClick={() => handleRemoveMetric(metric)} 
                       />
                     </Badge>
                   ))}
@@ -313,27 +323,27 @@ export function SensitivityAnalysis() {
         
           <SensitivityChart 
             selectedVariables={selectedVariables}
-            currentMetric={currentMetric}
+            currentMetric={chartMetric}
             selectedMetrics={selectedMetrics}
-            onMetricChange={setCurrentMetric}
+            onMetricChange={setChartMetric}
             isLoading={isLoading}
-            baseValue={baseValues[currentMetric] || baseValue}
+            baseValue={baseValues[chartMetric] || baseValue}
           />
           
           <DataPanel>
             <SensitivityCoefficientTable
               variables={selectedVariables}
-              currentMetric={currentMetric}
+              currentMetric={tableMetric}
               selectedMetrics={selectedMetrics}
-              onMetricChange={setCurrentMetric}
-              baseValue={baseValues[currentMetric] || baseValue}
+              onMetricChange={setTableMetric}
+              baseValue={baseValues[tableMetric] || baseValue}
             />
           </DataPanel>
           
           <SensitivitySummary 
             selectedVariables={selectedVariables}
-            currentMetric={currentMetric}
-            baseValue={baseValues[currentMetric] || baseValue}
+            currentMetric={chartMetric}
+            baseValue={baseValues[chartMetric] || baseValue}
           />
         </div>
       </div>
