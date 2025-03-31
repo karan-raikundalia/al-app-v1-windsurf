@@ -166,16 +166,6 @@ export function SensitivityCoefficientTable({
     document.body.removeChild(link);
   };
   
-  const coefficientData = getCoefficientData();
-  
-  // Get the sort indicator arrow based on current sort state
-  const getSortIndicator = (column: string) => {
-    if (sortColumn === column) {
-      return sortDirection === "asc" ? <ChevronUp className="h-4 w-4 inline" /> : <ChevronDown className="h-4 w-4 inline" />;
-    }
-    return null;
-  };
-  
   const availableCategories = ["All", ...new Set(variables.map(v => v.category))];
   
   return (
@@ -292,7 +282,7 @@ export function SensitivityCoefficientTable({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {coefficientData.map((item, index) => (
+                {getCoefficientData().map((item, index) => (
                   <TableRow key={item.variable.id}>
                     <TableCell>{item.variable.name}</TableCell>
                     <TableCell className="text-center">
@@ -323,4 +313,12 @@ export function SensitivityCoefficientTable({
       </CollapsibleContent>
     </Collapsible>
   );
+  
+  // Get the sort indicator arrow based on current sort state
+  function getSortIndicator(column: string) {
+    if (sortColumn === column) {
+      return sortDirection === "asc" ? <ChevronUp className="h-4 w-4 inline" /> : <ChevronDown className="h-4 w-4 inline" />;
+    }
+    return null;
+  }
 }
