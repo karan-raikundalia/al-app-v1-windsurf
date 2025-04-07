@@ -1,4 +1,3 @@
-
 import { DataPanel } from "@/components/ui/DataPanel";
 import { AnalysisVariable } from "../VariableControl";
 
@@ -43,7 +42,7 @@ export function SensitivitySummary({
   // If no variables are selected, show the default content
   if (selectedVariables.length === 0) {
     return (
-      <div className="grid md:grid-cols-3 gap-6 animate-fade-in">
+      <div className="grid md:grid-cols-2 gap-6 animate-fade-in">
         <DataPanel title="Key Insights" className="border-t-4 border-t-blue-500">
           <ul className="space-y-3 text-sm">
             <li className="flex gap-2">
@@ -77,44 +76,12 @@ export function SensitivitySummary({
             </li>
           </ul>
         </DataPanel>
-        
-        <DataPanel title="Project Status" className="border-t-4 border-t-amber-500">
-          <div className="space-y-4">
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm">Overall Risk Level</span>
-                <span className="text-sm font-medium text-amber-500">Medium</span>
-              </div>
-              <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div className="h-full w-3/5 bg-amber-500 rounded-full"></div>
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm">Variables Analyzed</span>
-                <span className="text-sm font-medium">12</span>
-              </div>
-              <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div className="h-full w-full bg-blue-500 rounded-full"></div>
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm">Analysis Confidence</span>
-                <span className="text-sm font-medium text-green-500">High</span>
-              </div>
-              <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div className="h-full w-4/5 bg-green-500 rounded-full"></div>
-              </div>
-            </div>
-          </div>
-        </DataPanel>
       </div>
     );
   }
 
   return (
-    <div className="grid md:grid-cols-3 gap-6 animate-fade-in">
+    <div className="grid md:grid-cols-2 gap-6 animate-fade-in">
       <DataPanel title="Key Insights" className="border-t-4 border-t-blue-500">
         <ul className="space-y-3 text-sm">
           {topVariables.length > 0 && (
@@ -153,38 +120,6 @@ export function SensitivitySummary({
             <p>Develop contingency plans for high-impact variables</p>
           </li>
         </ul>
-      </DataPanel>
-      
-      <DataPanel title="Project Status" className="border-t-4 border-t-amber-500">
-        <div className="space-y-4">
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm">Overall Risk Level</span>
-              <span className={`text-sm font-medium ${riskColor}`}>{riskLevel}</span>
-            </div>
-            <div className="h-2 bg-muted rounded-full overflow-hidden">
-              <div className={`h-full ${riskWidth} ${riskLevel === "High" ? "bg-red-500" : riskLevel === "Medium" ? "bg-amber-500" : "bg-green-500"} rounded-full`}></div>
-            </div>
-          </div>
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm">Variables Analyzed</span>
-              <span className="text-sm font-medium">{selectedVariables.length}</span>
-            </div>
-            <div className="h-2 bg-muted rounded-full overflow-hidden">
-              <div className="h-full w-full bg-blue-500 rounded-full"></div>
-            </div>
-          </div>
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm">Analysis Confidence</span>
-              <span className="text-sm font-medium text-green-500">{selectedVariables.length > 5 ? "High" : selectedVariables.length > 2 ? "Medium" : "Low"}</span>
-            </div>
-            <div className="h-2 bg-muted rounded-full overflow-hidden">
-              <div className={`h-full ${selectedVariables.length > 5 ? "w-4/5" : selectedVariables.length > 2 ? "w-3/5" : "w-2/5"} bg-green-500 rounded-full`}></div>
-            </div>
-          </div>
-        </div>
       </DataPanel>
     </div>
   );
