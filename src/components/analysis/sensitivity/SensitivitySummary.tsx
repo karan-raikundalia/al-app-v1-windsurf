@@ -88,57 +88,19 @@ export function SensitivitySummary({
         <DataPanel className="border-t-4 border-t-blue-500">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-medium text-lg">Key Insights</h3>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => copyToClipboard(getKeyInsightsText(), setCopiedKeyInsights)}
-              className="h-8 w-8"
-            >
-              {copiedKeyInsights ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            </Button>
           </div>
-          <ul className="space-y-3 text-sm">
-            <li className="flex gap-2">
-              <div className="h-2 w-2 rounded-full bg-blue-500 mt-1.5 shrink-0"></div>
-              <p>Revenue Growth has the highest positive impact on project outcomes</p>
-            </li>
-            <li className="flex gap-2">
-              <div className="h-2 w-2 rounded-full bg-red-500 mt-1.5 shrink-0"></div>
-              <p>Labor Cost shows the most significant negative impact</p>
-            </li>
-            <li className="flex gap-2">
-              <div className="h-2 w-2 rounded-full bg-gray-500 mt-1.5 shrink-0"></div>
-              <p>5 variables have high sensitivity, requiring close monitoring</p>
-            </li>
-          </ul>
+          <div className="text-sm text-muted-foreground">
+            Run a sensitivity analysis to see key insights
+          </div>
         </DataPanel>
         
         <DataPanel className="border-t-4 border-t-green-500">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-medium text-lg">Recommendations</h3>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => copyToClipboard(getRecommendationsText(), setCopiedRecommendations)}
-              className="h-8 w-8"
-            >
-              {copiedRecommendations ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            </Button>
           </div>
-          <ul className="space-y-3 text-sm">
-            <li className="flex gap-2">
-              <div className="h-2 w-2 rounded-full bg-green-500 mt-1.5 shrink-0"></div>
-              <p>Implement Revenue Growth optimization strategies</p>
-            </li>
-            <li className="flex gap-2">
-              <div className="h-2 w-2 rounded-full bg-green-500 mt-1.5 shrink-0"></div>
-              <p>Implement Labor Cost containment measures</p>
-            </li>
-            <li className="flex gap-2">
-              <div className="h-2 w-2 rounded-full bg-green-500 mt-1.5 shrink-0"></div>
-              <p>Develop contingency plans for Supply Chain Delays</p>
-            </li>
-          </ul>
+          <div className="text-sm text-muted-foreground">
+            Run a sensitivity analysis to see recommendations
+          </div>
         </DataPanel>
       </div>
     );
