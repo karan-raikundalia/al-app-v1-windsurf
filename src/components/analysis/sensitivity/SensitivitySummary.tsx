@@ -85,7 +85,18 @@ export function SensitivitySummary({
   if (selectedVariables.length === 0) {
     return (
       <div className="grid md:grid-cols-2 gap-6 animate-fade-in">
-        <DataPanel title="Key Insights" className="border-t-4 border-t-blue-500">
+        <DataPanel className="border-t-4 border-t-blue-500">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-medium text-lg">Key Insights</h3>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => copyToClipboard(getKeyInsightsText(), setCopiedKeyInsights)}
+              className="h-8 w-8"
+            >
+              {copiedKeyInsights ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            </Button>
+          </div>
           <ul className="space-y-3 text-sm">
             <li className="flex gap-2">
               <div className="h-2 w-2 rounded-full bg-blue-500 mt-1.5 shrink-0"></div>
@@ -102,11 +113,22 @@ export function SensitivitySummary({
           </ul>
         </DataPanel>
         
-        <DataPanel title="Recommendations" className="border-t-4 border-t-green-500">
+        <DataPanel className="border-t-4 border-t-green-500">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-medium text-lg">Recommendations</h3>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => copyToClipboard(getRecommendationsText(), setCopiedRecommendations)}
+              className="h-8 w-8"
+            >
+              {copiedRecommendations ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            </Button>
+          </div>
           <ul className="space-y-3 text-sm">
             <li className="flex gap-2">
               <div className="h-2 w-2 rounded-full bg-green-500 mt-1.5 shrink-0"></div>
-              <p>Focus on optimizing Revenue Growth strategies</p>
+              <p>Implement Revenue Growth optimization strategies</p>
             </li>
             <li className="flex gap-2">
               <div className="h-2 w-2 rounded-full bg-green-500 mt-1.5 shrink-0"></div>
@@ -124,7 +146,7 @@ export function SensitivitySummary({
 
   return (
     <div className="grid md:grid-cols-2 gap-6 animate-fade-in">
-      <DataPanel title="Key Insights" className="border-t-4 border-t-blue-500">
+      <DataPanel className="border-t-4 border-t-blue-500">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-medium text-lg">Key Insights</h3>
           <Button
@@ -154,7 +176,7 @@ export function SensitivitySummary({
         </ul>
       </DataPanel>
       
-      <DataPanel title="Recommendations" className="border-t-4 border-t-green-500">
+      <DataPanel className="border-t-4 border-t-green-500">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-medium text-lg">Recommendations</h3>
           <Button
