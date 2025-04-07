@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 
 // Define the input value types
@@ -140,6 +139,18 @@ const initialInputs: InputValue[] = [
     dataType: "constant",
     expenseType: "opex",
     value: 16,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: "solar-6",
+    name: "Solar PPA Price",
+    description: "Power Purchase Agreement price per megawatt",
+    categoryId: "solar",
+    unit: "$/MW",
+    dataType: "constant",
+    expenseType: "opex",
+    value: 40,
     createdAt: new Date(),
     updatedAt: new Date(),
   },

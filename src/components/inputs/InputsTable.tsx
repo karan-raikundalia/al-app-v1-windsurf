@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import {
   Table,
@@ -56,6 +55,7 @@ export function InputsTable({
   const filteredInputs = inputs.filter((input) => {
     const categoryMatch = !categoryFilter || categoryFilter === "all" || input.categoryId === categoryFilter;
     const dataTypeMatch = dataTypeFilter === "all" || input.dataType === dataTypeFilter;
+    console.log('Input:', input.name, 'Category:', input.categoryId, 'Category Match:', categoryMatch);
     return categoryMatch && dataTypeMatch;
   });
 
@@ -66,11 +66,15 @@ export function InputsTable({
       acc[key] = [];
     }
     acc[key].push(input);
+    console.log('Grouped Input:', input.name, 'Key:', key);
     return acc;
   }, {} as Record<string, InputValue[]>);
 
   // Helper function to get expense type based on input properties
   function getExpenseType(input: InputValue): string {
+    if (input.expenseType) {
+      return input.expenseType;
+    }
     if (input.name.toLowerCase().includes("capex") || input.description.toLowerCase().includes("capital")) {
       return "capex";
     } else if (input.name.toLowerCase().includes("opex") || input.description.toLowerCase().includes("operating")) {

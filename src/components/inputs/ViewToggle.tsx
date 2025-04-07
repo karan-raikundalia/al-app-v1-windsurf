@@ -1,4 +1,3 @@
-
 import { LayoutGrid, LayoutList, FileStackIcon, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -24,12 +23,12 @@ export function ViewToggle({
           size="sm"
           className={cn(
             "rounded-none border-0 px-3 hover:bg-muted",
-            view === "card" && "bg-primary/10 text-primary"
+            view === "table" && "bg-primary/10 text-primary"
           )}
-          onClick={() => onViewChange("card")}
+          onClick={() => onViewChange("table")}
         >
-          <LayoutGrid className="mr-2 h-4 w-4" />
-          Card View
+          <LayoutList className="mr-2 h-4 w-4" />
+          Table View
         </Button>
         <div className="border-l h-9" />
         <Button
@@ -37,12 +36,12 @@ export function ViewToggle({
           size="sm"
           className={cn(
             "rounded-none border-0 px-3 hover:bg-muted",
-            view === "table" && "bg-primary/10 text-primary"
+            view === "card" && "bg-primary/10 text-primary"
           )}
-          onClick={() => onViewChange("table")}
+          onClick={() => onViewChange("card")}
         >
-          <LayoutList className="mr-2 h-4 w-4" />
-          Table View
+          <LayoutGrid className="mr-2 h-4 w-4" />
+          Card View
         </Button>
       </div>
 
