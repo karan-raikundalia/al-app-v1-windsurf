@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { 
   Table, 
@@ -30,7 +29,7 @@ interface SensitivityCoefficientTableProps {
   baseValue: number;
 }
 
-type SensitivityRange = "5" | "10" | "15" | "20";
+type SensitivityRange = "5" | "10" | "15" | "20" | "25" | "30";
 
 export function SensitivityCoefficientTable({ 
   variables, 
@@ -40,7 +39,7 @@ export function SensitivityCoefficientTable({
   baseValue 
 }: SensitivityCoefficientTableProps) {
   const [isExpanded, setIsExpanded] = useState(true);
-  const [sensitivityRange, setSensitivityRange] = useState<SensitivityRange>("10");
+  const [sensitivityRange, setSensitivityRange] = useState<SensitivityRange>("20");
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [sortColumn, setSortColumn] = useState("coefficient");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
@@ -212,6 +211,8 @@ export function SensitivityCoefficientTable({
                 <SelectItem value="10">±10%</SelectItem>
                 <SelectItem value="15">±15%</SelectItem>
                 <SelectItem value="20">±20%</SelectItem>
+                <SelectItem value="25">±25%</SelectItem>
+                <SelectItem value="30">±30%</SelectItem>
               </SelectContent>
             </Select>
           </div>
