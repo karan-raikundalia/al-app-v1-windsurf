@@ -414,7 +414,7 @@ export function VariableControl({
                       <div className="flex justify-between text-xs text-muted-foreground">
                         <span className="flex items-center">
                           Min
-                          <span className="inline-block h-3 w-3 rounded-full border-2 border-amber-500 ml-1" />
+                          <span className="inline-block h-3 w-3 rounded-full border-2 border-red-500 ml-1" />
                         </span>
                         <span>Base</span>
                         <span className="flex items-center">
