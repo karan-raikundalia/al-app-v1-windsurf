@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { PlusCircle, Database, Info, LayoutGrid } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -23,7 +22,7 @@ export default function InputsPage() {
   const [activeTab, setActiveTab] = useState<string>("all");
   const [showInputDialog, setShowInputDialog] = useState(false);
   const [dataTypeFilter, setDataTypeFilter] = useState<InputDataType | "all">("all");
-  const [view, setView] = useState<"card" | "table">("card");
+  const [view, setView] = useState<"card" | "table">("table");
   const [viewMode, setViewMode] = useState<"component" | "expense">("component");
 
   const categories: InputCategory[] = [
@@ -132,12 +131,70 @@ export default function InputsPage() {
             <TabsTrigger value="all">All Categories</TabsTrigger>
             <TabsTrigger value="bess">BESS</TabsTrigger>
             <TabsTrigger value="hydrogen">Hydrogen</TabsTrigger>
+            <TabsTrigger value="solar">Solar</TabsTrigger>
             <TabsTrigger value="financing">Financing</TabsTrigger>
             <TabsTrigger value="tax">Tax & Credits</TabsTrigger>
             <TabsTrigger value="production">Production</TabsTrigger>
           </TabsList>
 
-          {view === "card" ? (
+          {view === "table" ? (
+            <>
+              <TabsContent value="all" className="space-y-4">
+                <InputsTable
+                  dataTypeFilter={dataTypeFilter}
+                  viewMode={viewMode}
+                />
+              </TabsContent>
+
+              <TabsContent value="bess" className="space-y-4">
+                <InputsTable
+                  categoryFilter="bess"
+                  dataTypeFilter={dataTypeFilter}
+                  viewMode={viewMode}
+                />
+              </TabsContent>
+
+              <TabsContent value="hydrogen" className="space-y-4">
+                <InputsTable
+                  categoryFilter="hydrogen"
+                  dataTypeFilter={dataTypeFilter}
+                  viewMode={viewMode}
+                />
+              </TabsContent>
+
+              <TabsContent value="solar" className="space-y-4">
+                <InputsTable
+                  categoryFilter="solar"
+                  dataTypeFilter={dataTypeFilter}
+                  viewMode={viewMode}
+                />
+              </TabsContent>
+              
+              <TabsContent value="financing" className="space-y-4">
+                <InputsTable
+                  categoryFilter="financing"
+                  dataTypeFilter={dataTypeFilter}
+                  viewMode={viewMode}
+                />
+              </TabsContent>
+
+              <TabsContent value="tax" className="space-y-4">
+                <InputsTable
+                  categoryFilter="tax"
+                  dataTypeFilter={dataTypeFilter}
+                  viewMode={viewMode}
+                />
+              </TabsContent>
+              
+              <TabsContent value="production" className="space-y-4">
+                <InputsTable
+                  categoryFilter="production"
+                  dataTypeFilter={dataTypeFilter}
+                  viewMode={viewMode}
+                />
+              </TabsContent>
+            </>
+          ) : (
             <>
               <TabsContent value="all" className="space-y-4">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -177,6 +234,28 @@ export default function InputsPage() {
                       />
                     ))}
                 </div>
+              </TabsContent>
+
+              <TabsContent value="solar" className="space-y-4">
+                {view === "table" ? (
+                  <InputsTable
+                    categoryFilter="solar"
+                    dataTypeFilter={dataTypeFilter}
+                    viewMode={viewMode}
+                  />
+                ) : (
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {categories
+                      .filter(c => c.id === "solar")
+                      .map((category) => (
+                        <InputCategoryCard 
+                          key={category.id} 
+                          category={category} 
+                          dataTypeFilter={dataTypeFilter}
+                        />
+                      ))}
+                  </div>
+                )}
               </TabsContent>
               
               <TabsContent value="financing" className="space-y-4">
@@ -219,55 +298,6 @@ export default function InputsPage() {
                       />
                     ))}
                 </div>
-              </TabsContent>
-            </>
-          ) : (
-            <>
-              <TabsContent value="all" className="space-y-4">
-                <InputsTable
-                  dataTypeFilter={dataTypeFilter}
-                  viewMode={viewMode}
-                />
-              </TabsContent>
-
-              <TabsContent value="bess" className="space-y-4">
-                <InputsTable
-                  categoryFilter="bess"
-                  dataTypeFilter={dataTypeFilter}
-                  viewMode={viewMode}
-                />
-              </TabsContent>
-
-              <TabsContent value="hydrogen" className="space-y-4">
-                <InputsTable
-                  categoryFilter="hydrogen"
-                  dataTypeFilter={dataTypeFilter}
-                  viewMode={viewMode}
-                />
-              </TabsContent>
-              
-              <TabsContent value="financing" className="space-y-4">
-                <InputsTable
-                  categoryFilter="financing"
-                  dataTypeFilter={dataTypeFilter}
-                  viewMode={viewMode}
-                />
-              </TabsContent>
-
-              <TabsContent value="tax" className="space-y-4">
-                <InputsTable
-                  categoryFilter="tax"
-                  dataTypeFilter={dataTypeFilter}
-                  viewMode={viewMode}
-                />
-              </TabsContent>
-              
-              <TabsContent value="production" className="space-y-4">
-                <InputsTable
-                  categoryFilter="production"
-                  dataTypeFilter={dataTypeFilter}
-                  viewMode={viewMode}
-                />
               </TabsContent>
             </>
           )}

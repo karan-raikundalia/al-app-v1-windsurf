@@ -1,0 +1,660 @@
+[
+   {
+     "id": "Project",
+     "parent_id": null,
+     "label": "Project"
+   },
+   {
+     "id": "Project_InputS",
+     "parent_id": "Project",
+     "label": "InputS"
+   },
+   {
+     "id": "Project_InputS_Timeline",
+     "parent_id": "Project_InputS",
+     "label": "Timeline"
+   },
+   {
+     "id": "Project_InputS_SCurveProfile",
+     "parent_id": "Project_InputS",
+     "label": "S-Curve Profile"
+   },
+   {
+     "id": "Project_InputSHourlyResourceAnalysis",
+     "parent_id": "Project",
+     "label": "Hourly Resource Analysis"
+   },
+   {
+     "id": "Project_InputSHourlyResourceAnalysis_MonthlyOutput",
+     "parent_id": "Project_InputSHourlyResourceAnalysis",
+     "label": "Monthly Output"
+   },
+   {
+     "id": "Project_InputSHourlyResourceAnalysis_MonthlyOutputSummaries",
+     "parent_id": "Project_InputSHourlyResourceAnalysis",
+     "label": "Monthly Output Summaries"
+   },
+   {
+     "id": "Project_InputSHourlyResourceAnalysis_MonthlyOutputSummaries_SolarOutput",
+     "parent_id": "Project_InputSHourlyResourceAnalysis_MonthlyOutputSummaries",
+     "label": "Solar Output"
+   },
+   {
+     "id": "Project_InputCSolar",
+     "parent_id": "Project",
+     "label": "Solar"
+   },
+   {
+     "id": "Project_InputCSolar_Active",
+     "parent_id": "Project_InputCSolar",
+     "label": "Active"
+   },
+   {
+     "id": "Project_InputCSolar_Active_Timeline",
+     "parent_id": "Project_InputCSolar_Active",
+     "label": "Timeline"
+   },
+   {
+     "id": "Project_InputCSolar_Active_ProjectCapacity",
+     "parent_id": "Project_InputCSolar_Active",
+     "label": "Project Capacity"
+   },
+   {
+     "id": "Project_InputCSolar_Active_CapitalExpenditures",
+     "parent_id": "Project_InputCSolar_Active",
+     "label": "Capital Expenditures"
+   },
+   {
+     "id": "Project_InputCSolar_Active_OperatingExpenditures",
+     "parent_id": "Project_InputCSolar_Active",
+     "label": "Operating Expenditures"
+   },
+   {
+     "id": "Project_InputCSolar_Active_RevenueAssumptions",
+     "parent_id": "Project_InputCSolar_Active",
+     "label": "Revenue Assumptions"
+   },
+   {
+     "id": "project-1",
+     "Model_ID": "Project_InputS_Timeline_ModelStartDate",
+     "parent_ID": "Project_InputS_Timeline",
+     "name": "Model Start Date",
+     "description": "Model start date for the project",
+     "categoryId": "project",
+     "unit": "date",
+     "dataType": "constant",
+     "expenseType": "other",
+     "value": "2025-01-01"
+   },
+   {
+     "id": "project-2",
+     "Model_ID": "Project_InputS_Timeline_HoursYear",
+     "parent_ID": "Project_InputS_Timeline",
+     "name": "Hours (Year)",
+     "description": "Hours in a year for the project",
+     "categoryId": "project",
+     "unit": "Hours",
+     "dataType": "constant",
+     "expenseType": "other",
+     "value": 8760
+   },
+   {
+     "id": "project-3",
+     "Model_ID": "Project_InputS_Timeline_MonthsYear",
+     "parent_ID": "Project_InputS_Timeline",
+     "name": "Months (Year)",
+     "description": "Months in a year for the project",
+     "categoryId": "project",
+     "unit": "Months",
+     "dataType": "constant",
+     "expenseType": "other",
+     "value": 12
+   },
+   {
+     "id": "project-4",
+     "Model_ID": "Project_InputS_Timeline_ProjectIRRTarget",
+     "parent_ID": "Project_InputS_Timeline",
+     "name": "Project IRR Target",
+     "description": "Target IRR for the project",
+     "categoryId": "project",
+     "unit": "%USD",
+     "dataType": "constant",
+     "expenseType": "other",
+     "value": 0.12
+   },
+   {
+     "id": "project-5",
+     "Model_ID": "Project_InputS_Timeline_InflationRate",
+     "parent_ID": "Project_InputS_Timeline",
+     "name": "Inflation Rate",
+     "description": "Inflation rate for the project",
+     "categoryId": "project",
+     "unit": "%USD",
+     "dataType": "constant",
+     "expenseType": "other",
+     "value": 0.03
+   },
+   {
+     "id": "project-6",
+     "Model_ID": "Project_InputS_Timeline_InflationRateMonthly",
+     "parent_ID": "Project_InputS_Timeline",
+     "name": "Inflation Rate Monthly",
+     "description": "Inflation rate monthly for the project",
+     "categoryId": "project",
+     "unit": "%p.m.",
+     "dataType": "constant",
+     "expenseType": "other",
+     "value": 0.0024662697723036864
+   },
+   {
+     "id": "project-7",
+     "Model_ID": "Project_InputS_Timeline_RealProjectIRR",
+     "parent_ID": "Project_InputS_Timeline",
+     "name": "Real Project IRR",
+     "description": "Real project IRR for the project",
+     "categoryId": "project",
+     "unit": "%p.a.",
+     "dataType": "constant",
+     "expenseType": "other",
+     "value": 0.08737864077669921
+   },
+   {
+     "id": "project-8",
+     "Model_ID": "Project_InputS_SCurveProfile_Month",
+     "parent_ID": "Project_InputS_SCurveProfile",
+     "name": "Month",
+     "description": "Month for the SCurveProfile",
+     "categoryId": "project",
+     "unit": "Month",
+     "dataType": "time-series",
+     "expenseType": "other",
+     "value": "squeeze([1:36])"
+   },
+   {
+     "id": "project-9",
+     "Model_ID": "Project_InputS_SCurveProfile_Month",
+     "parent_ID": "Project_InputS_SCurveProfile",
+     "name": "Month",
+     "description": "Month for the SCurveProfile",
+     "categoryId": "project",
+     "unit": "Month",
+     "dataType": "time-series",
+     "expenseType": "other",
+     "value": "squeeze(map(Month, _<InputCSolar_Active_Timeline_ConstructionMonths ? 1 /InputCSolar_Active_Timeline_ConstructionMonths : 0))"
+   },
+   {
+     "id": "project-10",
+     "Model_ID": "Project_InputS_Timeline_IncomeTaxRate",
+     "parent_ID": "Project_InputS_Timeline",
+     "name": "Income Tax Rate",
+     "description": "Income tax rate for the project",
+     "categoryId": "project",
+     "unit": "%p.a.",
+     "dataType": "constant",
+     "expenseType": "other",
+     "value": 0.2
+   },
+   {
+     "id": "project-11",
+     "Model_ID": "Project_InputSHourlyResourceAnalysis_MonthlyOutputSummaries_SolarOutput_Total",
+     "parent_ID": "Project_InputSHourlyResourceAnalysis_MonthlyOutputSummaries_SolarOutput",
+     "name": "Total Solar Output",
+     "description": "Total solar output for the project",
+     "categoryId": "project",
+     "unit": "kWh",
+     "dataType": "constant",
+     "expenseType": "other",
+     "value": 402677660.50638926
+   },
+   {
+     "id": "project-12",
+     "Model_ID": "Project_InputSHourlyResourceAnalysis_MonthlyOutputSummaries_SolarOutput_CapacityFactor",
+     "parent_ID": "Project_InputSHourlyResourceAnalysis_MonthlyOutputSummaries_SolarOutput",
+     "name": "Capacity Factor",
+     "description": "Capacity factor for the solar installation",
+     "categoryId": "solar",
+     "unit": "%",
+     "dataType": "constant",
+     "expenseType": "capex",
+     "value": 0.270398643907057
+   },
+   {
+     "id": "project-13",
+     "Model_ID": "Project_InputSHourlyResourceAnalysis_MonthlyOutput_Date",
+     "parent_ID": "Project_InputSHourlyResourceAnalysis_MonthlyOutput",
+     "name": "Date",
+     "description": "Date for the monthly output",
+     "categoryId": "project",
+     "unit": "date",
+     "dataType": "time-series",
+     "expenseType": "other",
+     "value": [
+         "20200131",
+         "20200229",
+         "20200331",
+         "20200430",
+         "20200531",
+         "20200630",
+         "20200731",
+         "20200831",
+         "20200930",
+         "20201031",
+         "20201130",
+         "20201231"
+       ]
+   },
+   {
+     "id": "project-14",
+     "Model_ID": "Project_InputSHourlyResourceAnalysis_MonthlyOutput_SolarOutput",
+     "parent_ID": "Project_InputSHourlyResourceAnalysis_MonthlyOutput",
+     "name": "Solar Output",
+     "description": "Solar output for the project",
+     "categoryId": "solar",
+     "unit": "kWh",
+     "dataType": "time-series",
+     "expenseType": "other",
+     "value": [
+       34764383.66725853,
+       35477865.27873947,
+       36256007.98343968,
+       37512403.43941256,
+       34616845.411641985,
+       31608058.9725084,
+       27974123.619799092,
+       28525734.22415866,
+       32938030.307138156,
+       35752091.58766927,
+       32880919.78237168,
+       34371196.232251845
+     ]
+   },
+   {
+     "id": "project-15",
+     "Model_ID": "Project_InputSHourlyResourceAnalysis_MonthlyOutput_Month",
+     "parent_ID": "Project_InputSHourlyResourceAnalysis_MonthlyOutput",
+     "name": "Month",
+     "description": "Month  for the monthly output",
+     "categoryId": "project",
+     "unit": "month",
+     "dataType": "time-series",
+     "expenseType": "other",
+     "value": [
+       [
+         1,
+         2,
+         3,
+         4,
+         5,
+         6,
+         7,
+         8,
+         9,
+         10,
+         11,
+         12
+       ]
+     ]
+   },
+   {
+     "id": "project-16",
+     "Model_ID": "Project_InputSHourlyResourceAnalysis_MonthlyOutput_SolarSeasonalFactor",
+     "parent_ID": "Project_InputSHourlyResourceAnalysis_MonthlyOutput",
+     "name": "Solar Seasonal Factor",
+     "description": "Solar seasonal factor for the project",
+     "categoryId": "solar",
+     "unit": "%",
+     "dataType": "time-series",
+     "expenseType": "other",
+     "value": [
+       0.08633303278741714,
+       0.08810487583076773,
+       0.09003729667507693,
+       0.09315739887889149,
+       0.08596663983820062,
+       0.07849469208885224,
+       0.06947026458984612,
+       0.07084012107422592,
+       0.08179751085698862,
+       0.08878588283916483,
+       0.08165568395580257,
+       0.08535660058476593
+     ]
+   },
+   {
+     "id": "solar-1",
+     "Model_ID": "Project_InputSHourlyResourceAnalysis_MonthlyOutputSummaries_SolarOutput_Capacity",
+     "parent_ID": "Project_InputSHourlyResourceAnalysis_MonthlyOutputSummaries_SolarOutput",
+     "name": "Solar Capacity",
+     "description": "Total capacity of the solar installation",
+     "categoryId": "solar",
+     "unit": "kW",
+     "dataType": "constant",
+     "expenseType": "capex",
+     "value": 170000
+   },
+   {
+     "id": "solar-2",
+     "Model_ID": "Project_InputCSolar_Active_Timeline_ConstructionStart",
+     "parent_ID": "Project_InputCSolar_Active_Timeline",
+     "name": "Solar Construction Start Date",
+     "description": "Construction start date for the solar installation",
+     "categoryId": "solar",
+     "unit": "date",
+     "dataType": "constant",
+     "expenseType": "other",
+     "value": "2026-01-01"
+   },
+   {
+     "id": "solar-3",
+     "Model_ID": "Project_InputCSolar_Active_Timeline_ConstructionDuration",
+     "parent_ID": "Project_InputCSolar_Active_Timeline",
+     "name": "Construction Duration",
+     "description": "Duration of construction for the solar installation",
+     "categoryId": "solar",
+     "unit": "Months",
+     "dataType": "constant",
+     "expenseType": "other",
+     "value": 12
+   },
+   {
+     "id": "solar-4",
+     "Model_ID": "Project_InputCSolar_Active_Timeline_OperationStart",
+     "parent_ID": "Project_InputCSolar_Active_Timeline",
+     "name": "Operation Start Date",
+     "description": "Start date for operation of the solar installation",
+     "categoryId": "solar",
+     "unit": "date",
+     "dataType": "constant",
+     "expenseType": "other",
+     "value": "2026-09-01"
+   },
+   {
+     "id": "solar-5",
+     "Model_ID": "Project_InputCSolar_Active_Timeline_OperationYears",
+     "parent_ID": "Project_InputCSolar_Active_Timeline",
+     "name": "Years of Operation",
+     "description": "Number of years of operation for the solar plant",
+     "categoryId": "solar",
+     "unit": "Years",
+     "dataType": "constant",
+     "expenseType": "other",
+     "value": 20
+   },
+   {
+     "id": "solar-6",
+     "Model_ID": "Project_InputCSolar_Active_Timeline_DecommissioningDate",
+     "parent_ID": "Project_InputCSolar_Active_Timeline",
+     "name": "Decommissioning Date",
+     "description": "Decommissioning date for solar plant",
+     "categoryId": "solar",
+     "unit": "date",
+     "dataType": "constant",
+     "expenseType": "other",
+     "value": "2046-09-01"
+   },
+   {
+     "id": "solar-7",
+     "Model_ID": "Project_InputCSolar_Active_ProjectCapacity_ApplyHourlyData",
+     "parent_ID": "Project_InputCSolar_Active_ProjectCapacity",
+     "name": "Apply Hourly Data",
+     "description": "Toggle on selecting hourly data for solar resource analysis",
+     "categoryId": "solar",
+     "unit": "",
+     "dataType": "boolean",
+     "expenseType": "other",
+     "value": true
+   },
+   {
+     "id": "solar-8",
+     "Model_ID": "Project_InputCSolar_Active_CapitalExpenditures_Modules",
+     "parent_ID": "Project_InputCSolar_Active_CapitalExpenditures",
+     "name": "Module CapEx",
+     "description": "Capital expenditure for solar modules",
+     "categoryId": "solar",
+     "unit": "$/kWp",
+     "dataType": "constant",
+     "expenseType": "capex",
+     "value": 220
+   },
+   {
+     "id": "solar-9",
+     "Model_ID": "Project_InputCSolar_Active_CapitalExpenditures_InvertersandOtherElectricalComponents",
+     "parent_ID": "Project_InputCSolar_Active_CapitalExpenditures",
+     "name": "Inverter CapEx",
+     "description": "Capital expenditure for solar inverters and other electrical components",
+     "categoryId": "solar",
+     "unit": "$/kWp",
+     "dataType": "constant",
+     "expenseType": "capex",
+     "value": 50
+   },
+   {
+     "id": "solar-10",
+     "Model_ID": "Project_InputCSolar_Active_CapitalExpenditures_RackingandFoundations",
+     "parent_ID": "Project_InputCSolar_Active_CapitalExpenditures",
+     "name": "Racking and Foundations CapEx",
+     "description": "Capital expenditure for solar racking and foundations",
+     "categoryId": "solar",
+     "unit": "$/kWp",
+     "dataType": "constant",
+     "expenseType": "capex",
+     "value": 180
+   },
+   {
+     "id": "solar-11",
+     "Model_ID": "Project_InputCSolar_Active_CapitalExpenditures_BalanceofSystem",
+     "parent_ID": "Project_InputCSolar_Active_CapitalExpenditures",
+     "name": "Balance of System CapEx",
+     "description": "Capital expenditure for solar balance of system",
+     "categoryId": "solar",
+     "unit": "$/kWp",
+     "dataType": "constant",
+     "expenseType": "capex",
+     "value": 120
+   },
+   {
+     "id": "solar-12",
+     "Model_ID": "Project_InputCSolar_Active_CapitalExpenditures_Labor",
+     "parent_ID": "Project_InputCSolar_Active_CapitalExpenditures",
+     "name": "Labor CapEx",
+     "description": "Labor expenditure for solar installation",
+     "categoryId": "solar",
+     "unit": "$/kWp",
+     "dataType": "constant",
+     "expenseType": "capex",
+     "value": 200
+   },
+   {
+     "id": "solar-13",
+     "Model_ID": "Project_InputCSolar_Active_CapitalExpenditures_GeneralConditions",
+     "parent_ID": "Project_InputCSolar_Active_CapitalExpenditures",
+     "name": "General Conditions CapEx",
+     "description": "General conditions expenditure for solar installation",
+     "categoryId": "solar",
+     "unit": "% of CapEx",
+     "dataType": "constant",
+     "expenseType": "capex",
+     "value": 0.005
+   },
+   {
+     "id": "solar-14",
+     "Model_ID": "Project_InputCSolar_Active_CapitalExpenditures_EPCOverhead",
+     "parent_ID": "Project_InputCSolar_Active_CapitalExpenditures",
+     "name": "EPC Overhead CapEx",
+     "description": "EPC overhead expenditure for solar installation",
+     "categoryId": "solar",
+     "unit": "% of CapEx",
+     "dataType": "constant",
+     "expenseType": "capex",
+     "value": 0.05
+   },
+   {
+     "id": "solar-15",
+     "Model_ID": "Project_InputCSolar_Active_CapitalExpenditures_DesignEngineeringandSurveys",
+     "parent_ID": "Project_InputCSolar_Active_CapitalExpenditures",
+     "name": "Design, Engineering, and Surveys CapEx",
+     "description": "Design, engineering, and surveys expenditure for solar installation",
+     "categoryId": "solar",
+     "unit": "% of CapEx",
+     "dataType": "constant",
+     "expenseType": "capex",
+     "value": 0.005
+   },
+   {
+     "id": "solar-16",
+     "Model_ID": "Project_InputCSolar_Active_CapitalExpenditures_PermittingInspection",
+     "parent_ID": "Project_InputCSolar_Active_CapitalExpenditures",
+     "name": "Permitting & Inspection CapEx",
+     "description": "Permitting & inspection expenditure for solar installation",
+     "categoryId": "solar",
+     "unit": "% of CapEx",
+     "dataType": "constant",
+     "expenseType": "capex",
+     "value": 0.005
+   },
+   {
+     "id": "solar-17",
+     "Model_ID": "Project_InputCSolar_Active_CapitalExpenditures_StartupCommissioning",
+     "parent_ID": "Project_InputCSolar_Active_CapitalExpenditures",
+     "name": "Startup & Commissioning CapEx",
+     "description": "Startup & commissioning expenditure for solar installation",
+     "categoryId": "solar",
+     "unit": "% of CapEx",
+     "dataType": "constant",
+     "expenseType": "capex",
+     "value": 0.0025
+   },
+   {
+     "id": "solar-18",
+     "Model_ID": "Project_InputCSolar_Active_OperatingExpenditures_PostWarrantyPeriod",
+     "parent_ID": "Project_InputCSolar_Active_OperatingExpenditures",
+     "name": "Post Warranty Period",
+     "description": "Post warranty period ",
+     "categoryId": "solar",
+     "unit": "Years",
+     "dataType": "constant",
+     "expenseType": "other",
+     "value": 6
+   },
+   {
+     "id": "solar-19",
+     "Model_ID": "Project_InputCSolar_Active_OperatingExpenditures_InsurancePostWarranty",
+     "parent_ID": "Project_InputCSolar_Active_OperatingExpenditures",
+     "name": "Insurance Cost Post Warranty",
+     "description": "Insurance cost post warranty operating expenditures",
+     "categoryId": "solar",
+     "unit": "% of CapEx",
+     "dataType": "constant",
+     "expenseType": "other",
+     "value": 0.002
+   },
+   {
+     "id": "solar-20",
+     "Model_ID": "Project_InputCSolar_Active_OperatingExpenditures_Degradation",
+     "parent_ID": "Project_InputCSolar_Active_OperatingExpenditures",
+     "name": "Degradation",
+     "description": "Degradation operating expenditures",
+     "categoryId": "solar",
+     "unit": "%",
+     "dataType": "constant",
+     "expenseType": "other",
+     "value": 0.005
+   },
+   {
+     "id": "solar-21",
+     "Model_ID": "Project_InputCSolar_Active_OperatingExpenditures_OperationsandMaintenanceOMCosts",
+     "parent_ID": "Project_InputCSolar_Active_OperatingExpenditures",
+     "name": "Operations and Maintenance (O&M) Costs",
+     "description": "Operations and maintenance (O&M) costs",
+     "categoryId": "solar",
+     "unit": "$/kW per year",
+     "dataType": "constant",
+     "expenseType": "other",
+     "value": 10
+   },
+   {
+     "id": "solar-22",
+     "Model_ID": "Project_InputCSolar_Active_OperatingExpenditures_AssetManagementFees",
+     "parent_ID": "Project_InputCSolar_Active_OperatingExpenditures",
+     "name": "Asset Management Fees",
+     "description": "Asset management fees",
+     "categoryId": "solar",
+     "unit": "$/kW per year",
+     "dataType": "constant",
+     "expenseType": "other",
+     "value": 0.084
+   }, 
+   {
+     "id": "solar-23",
+     "Model_ID": "Project_InputCSolar_Active_OperatingExpenditures_BOSExpenses",
+     "parent_ID": "Project_InputCSolar_Active_OperatingExpenditures",
+     "name": "BOS Expenses",
+     "description": "Balance of System (BOS) expenses",
+     "categoryId": "solar",
+     "unit": "$/kW per year",
+     "dataType": "constant",
+     "expenseType": "other",
+     "value": 3
+   },
+   {
+     "id": "solar-24",
+     "Model_ID": "Project_InputCSolar_Active_OperatingExpenditures_GeneralExpeneses",
+     "parent_ID": "Project_InputCSolar_Active_OperatingExpenditures",
+     "name": "General Expenses",
+     "description": "General expenses",
+     "categoryId": "solar",
+     "unit": "$/kW per year",
+     "dataType": "constant",
+     "expenseType": "other",
+     "value": 2
+   },
+   {
+     "id": "solar-25",
+     "Model_ID": "Project_InputCSolar_Active_OperatingExpenditures_LandLeaseCost",
+     "parent_ID": "Project_InputCSolar_Active_OperatingExpenditures",
+     "name": "Land Lease Cost",
+     "description": "Land lease cost",
+     "categoryId": "solar",
+     "unit": "$/year",
+     "dataType": "constant",
+     "expenseType": "other",
+     "value": 1200000
+   },
+   {
+     "id": "solar-26",
+     "Model_ID": "Project_InputCSolar_Active_OperatingExpenditures_PropertyTaxes",
+     "parent_ID": "Project_InputCSolar_Active_OperatingExpenditures",
+     "name": "Property Taxes",
+     "description": "Property taxes",
+     "categoryId": "solar",
+     "unit": "$/year",
+     "dataType": "constant",
+     "expenseType": "other",
+     "value": 600000
+   },
+   {
+     "id": "solar-26",
+     "Model_ID": "Project_InputCSolar_Active_RevenueAssumptions_TargetIRR",
+     "parent_ID": "Project_InputCSolar_Active_RevenueAssumptions",
+     "name": "Target IRR",
+     "description": "Target IRR",
+     "categoryId": "solar",
+     "unit": "%",
+     "dataType": "constant",
+     "expenseType": "other",
+     "value": 0.12
+   },
+   {
+     "id": "solar-26",
+     "Model_ID": "Project_InputCSolar_Active_RevenueAssumptions_InflateLCOEandPrice",
+     "parent_ID": "Project_InputCSolar_Active_RevenueAssumptions",
+     "name": "Inflate LCOE and Price",
+     "description": "Toggle on Inflate LCOE and Price",
+     "categoryId": "solar",
+     "unit": "boolean",
+     "dataType": "constant",
+     "expenseType": "other",
+     "value": true
+   }
+   
+ ]
